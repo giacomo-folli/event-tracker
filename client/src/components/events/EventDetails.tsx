@@ -5,6 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import ParticipantsList from "./ParticipantsList";
 import { EditEventForm } from "./EditEventForm";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useEventSharing } from "@/hooks/useEventSharing";
+import { useToast } from "@/hooks/use-toast";
+import { Copy, Link, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface EventDetailsProps {
   event: Event;

@@ -153,6 +153,13 @@ export const updateEventSchema = createInsertSchema(events).pick({
   shareUrl: true,
 });
 
+// Partial event update for sharing
+export const updateEventSharingSchema = createInsertSchema(events).partial().pick({
+  isShared: true,
+  shareToken: true,
+  shareUrl: true,
+});
+
 // Extended schemas with validation
 export const eventFormSchema = insertEventSchema.extend({
   title: z.string().min(1, "Title is required"),
@@ -218,6 +225,7 @@ export type User = typeof users.$inferSelect;
 
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type UpdateEvent = z.infer<typeof updateEventSchema>;
+export type UpdateEventSharing = z.infer<typeof updateEventSharingSchema>;
 export type Event = typeof events.$inferSelect;
 
 export const insertMediaSchema = createInsertSchema(media)
