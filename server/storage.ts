@@ -45,6 +45,13 @@ export interface IStorage {
   linkMediaToCourse(courseId: number, mediaId: number, order?: number): Promise<CourseMedia>;
   unlinkMediaFromCourse(courseId: number, mediaId: number): Promise<boolean>;
   updateMediaOrder(courseId: number, mediaId: number, order: number): Promise<CourseMedia | undefined>;
+  
+  // Event participants methods
+  getEventParticipants(eventId: number): Promise<EventParticipant[]>;
+  getEventParticipant(id: number): Promise<EventParticipant | undefined>;
+  createEventParticipant(participant: InsertEventParticipant): Promise<EventParticipant>;
+  updateEventParticipantAttendance(id: number, attended: boolean): Promise<EventParticipant | undefined>;
+  deleteEventParticipant(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -53,10 +60,12 @@ export class MemStorage implements IStorage {
   private courses: Map<number, Course>;
   private media: Map<number, Media> = new Map();
   private courseMediaRelations: Map<string, CourseMedia> = new Map(); // Key is `${courseId}-${mediaId}`
+  private eventParticipants: Map<number, EventParticipant> = new Map();
   private userCurrentId: number;
   private eventCurrentId: number;
   private courseCurrentId: number; 
   private mediaCurrentId: number = 1;
+  private eventParticipantCurrentId: number = 1;
   public sessionStore: session.Store;
 
   constructor() {

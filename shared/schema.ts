@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
@@ -61,7 +61,33 @@ export const courseMedia = pgTable("course_media", {
   order: integer("order").default(0), // For ordering media within a course
 });
 
+// Event participants table
+export const eventParticipants = pgTable("event_participants", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  name: text("name"),
+  attended: boolean("attended").default(false),
+}, (table) => {
+  return {
+    // Ensure no duplicate emails for the same event
+    uniqueEmailPerEvent: unique().on(table.eventId, table.email)
+  };
+});
+
 // Relations
+export const eventsRelations = relations(events, ({ many }) => ({
+  participants: many(eventParticipants),
+}));
+
+export const eventParticipantsRelations = relations(eventParticipants, ({ one }) => ({
+  event: one(events, {
+    fields: [eventParticipants.eventId],
+    references: [events.id],
+  }),
+}));
+
 export const coursesRelations = relations(courses, ({ many }) => ({
   courseMedia: many(courseMedia),
 }));
@@ -226,5 +252,20 @@ export type InsertMedia = z.infer<typeof insertMediaSchema>;
 export type UpdateMedia = z.infer<typeof updateMediaSchema>;
 export type Media = typeof media.$inferSelect;
 
+export const insertEventParticipantSchema = createInsertSchema(eventParticipants)
+  .pick({
+    eventId: true,
+    email: true,
+    name: true,
+  });
+
+export const eventParticipantFormSchema = insertEventParticipantSchema.extend({
+  email: z.string().email("Please enter a valid email address"),
+  name: z.string().optional(),
+});
+
 export type InsertCourseMedia = z.infer<typeof insertCourseMediaSchema>;
 export type CourseMedia = typeof courseMedia.$inferSelect;
+
+export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;
+export type EventParticipant = typeof eventParticipants.$inferSelect;
