@@ -1,7 +1,7 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage as dbStorage } from "./storage";
-import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema } from "@shared/schema";
+import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema, insertEventParticipantSchema, eventParticipantFormSchema } from "@shared/schema";
 import { join } from "path";
 import * as fs from "fs";
 import multer from "multer";
@@ -560,6 +560,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ relation });
     } catch (error) {
       res.status(500).json({ error: "Failed to update media order" });
+    }
+  });
+
+  // REST endpoints for event participants
+  app.get("/api/events/:eventId/participants", async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+
+      const participants = await dbStorage.getEventParticipants(eventId);
+      res.json({ participants });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch event participants" });
+    }
+  });
+
+  app.post("/api/events/:eventId/participants", async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.eventId);
+      if (isNaN(eventId)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+
+      // Validate the event exists
+      const event = await dbStorage.getEvent(eventId);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+
+      // Validate participant data
+      const result = eventParticipantFormSchema.safeParse({
+        ...req.body,
+        eventId
+      });
+      
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.format() });
+      }
+
+      try {
+        const participant = await dbStorage.createEventParticipant(result.data);
+        res.status(201).json({ participant });
+      } catch (error: any) {
+        // Handle unique email constraint error
+        if (error.message?.includes("already registered")) {
+          return res.status(400).json({ error: error.message });
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error registering participant:", error);
+      res.status(500).json({ error: "Failed to register participant" });
+    }
+  });
+
+  app.put("/api/events/participants/:id/attendance", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid participant ID" });
+      }
+
+      const { attended } = req.body;
+      if (typeof attended !== 'boolean') {
+        return res.status(400).json({ error: "Attended status must be a boolean" });
+      }
+
+      const participant = await dbStorage.updateEventParticipantAttendance(id, attended);
+      if (!participant) {
+        return res.status(404).json({ error: "Participant not found" });
+      }
+
+      res.json({ participant });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update participant attendance" });
+    }
+  });
+
+  app.delete("/api/events/participants/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid participant ID" });
+      }
+
+      const success = await dbStorage.deleteEventParticipant(id);
+      if (!success) {
+        return res.status(404).json({ error: "Participant not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete participant" });
     }
   });
 
