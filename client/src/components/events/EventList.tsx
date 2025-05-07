@@ -105,6 +105,16 @@ export function EventList({ events, onEventChange }: EventListProps) {
                   <TableCell>{event.location}</TableCell>
                   <TableCell className="max-w-xs truncate">{event.description}</TableCell>
                   <TableCell className="text-right">
+                    <Link href={`/admin/events/${event.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700 mr-2"
+                      >
+                        <Users className="h-4 w-4" />
+                        <span className="sr-only">Participants</span>
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -155,6 +165,15 @@ export function EventList({ events, onEventChange }: EventListProps) {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900 truncate">{event.title}</h3>
                   <div className="ml-2 flex-shrink-0 flex">
+                    <Link href={`/admin/events/${event.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="mr-1 text-green-600 hover:bg-green-50"
+                      >
+                        <Users className="h-5 w-5" />
+                      </Button>
+                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
