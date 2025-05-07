@@ -51,7 +51,8 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
   // Function to copy share URL to clipboard
   const copyShareUrl = () => {
     if (event.shareUrl) {
-      navigator.clipboard.writeText(event.shareUrl)
+      const fullUrl = window.location.origin + event.shareUrl;
+      navigator.clipboard.writeText(fullUrl)
         .then(() => {
           setCopied(true);
           toast({
@@ -143,7 +144,7 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
                       variant="outline"
                       size="sm"
                       className="flex items-center text-xs"
-                      onClick={() => event.shareUrl && window.open(event.shareUrl, '_blank')}
+                      onClick={() => event.shareUrl && window.open(window.location.origin + event.shareUrl, '_blank')}
                     >
                       <ExternalLink className="h-3.5 w-3.5 mr-1" />
                       View

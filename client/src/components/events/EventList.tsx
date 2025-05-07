@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Clock, MapPin, Trash, Pencil, Share2, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Trash, Pencil, Share2, Users, Eye } from "lucide-react";
 import { EventForm } from "./EventForm";
 import { EventShareDialog } from "./EventShareDialog";
 import { useToast } from "@/hooks/use-toast";
@@ -109,21 +109,12 @@ export function EventList({ events, onEventChange }: EventListProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-green-600 hover:text-green-700 mr-2"
+                        className="text-blue-600 hover:text-blue-700 mr-2"
                       >
-                        <Users className="h-4 w-4" />
-                        <span className="sr-only">Participants</span>
+                        <Eye className="h-4 w-4 mr-1" />
+                        Details
                       </Button>
                     </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShareEvent(event)}
-                      className="text-blue-600 hover:text-blue-700 mr-2"
-                    >
-                      <Share2 className="h-4 w-4" />
-                      <span className="sr-only">Share</span>
-                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -169,19 +160,12 @@ export function EventList({ events, onEventChange }: EventListProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="mr-1 text-green-600 hover:bg-green-50"
+                        className="mr-1 text-blue-600 hover:bg-blue-50 flex items-center"
                       >
-                        <Users className="h-5 w-5" />
+                        <Eye className="h-5 w-5 mr-1" />
+                        Details
                       </Button>
                     </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShareEvent(event)}
-                      className="mr-1 text-blue-600 hover:bg-blue-50"
-                    >
-                      <Share2 className="h-5 w-5" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
