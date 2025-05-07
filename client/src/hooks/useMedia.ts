@@ -9,7 +9,7 @@ export function useMedia() {
   const mediaQuery = useQuery<{ media: Media[] }>({
     queryKey: ['/api/media'],
     queryFn: async () => {
-      const response = await apiRequest('/api/media');
+      const response = await apiRequest("GET", '/api/media');
       return response.json();
     },
     staleTime: 1000 * 60, // 1 minute
@@ -20,7 +20,7 @@ export function useMedia() {
     useQuery<{ media: (Media & { order: number })[] }>({
       queryKey: ['/api/courses', courseId, 'media'],
       queryFn: async () => {
-        const response = await apiRequest(`/api/courses/${courseId}/media`);
+        const response = await apiRequest("GET", `/api/courses/${courseId}/media`);
         return response.json();
       },
       staleTime: 1000 * 60, // 1 minute
@@ -29,7 +29,7 @@ export function useMedia() {
   // Upload new media
   const uploadMediaMutation = useMutation({
     mutationFn: (formData: FormData) => 
-      apiRequest('/api/media', 'POST', formData), // FormData is detected in apiRequest
+      apiRequest("POST", '/api/media', formData), // FormData is detected in apiRequest
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/media'] });
     }
@@ -38,7 +38,7 @@ export function useMedia() {
   // Delete media
   const deleteMediaMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest(`/api/media/${id}`, 'DELETE'),
+      apiRequest("DELETE", `/api/media/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/media'] });
     }
@@ -47,7 +47,7 @@ export function useMedia() {
   // Update media
   const updateMediaMutation = useMutation({
     mutationFn: ({ id, ...data }: { id: number, title: string, description?: string }) => 
-      apiRequest(`/api/media/${id}`, 'PUT', data),
+      apiRequest("PUT", `/api/media/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/media'] });
     }
@@ -56,7 +56,7 @@ export function useMedia() {
   // Link media to course
   const linkMediaToCourse = useMutation({
     mutationFn: ({ courseId, mediaId, order }: { courseId: number, mediaId: number, order?: number }) => 
-      apiRequest(`/api/courses/${courseId}/media/${mediaId}`, 'POST', { order }),
+      apiRequest("POST", `/api/courses/${courseId}/media/${mediaId}`, { order }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', variables.courseId, 'media'] });
     }
@@ -65,7 +65,7 @@ export function useMedia() {
   // Unlink media from course
   const unlinkMediaFromCourse = useMutation({
     mutationFn: ({ courseId, mediaId }: { courseId: number, mediaId: number }) => 
-      apiRequest(`/api/courses/${courseId}/media/${mediaId}`, 'DELETE'),
+      apiRequest("DELETE", `/api/courses/${courseId}/media/${mediaId}`),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', variables.courseId, 'media'] });
     }
@@ -74,7 +74,7 @@ export function useMedia() {
   // Update media order within course
   const updateMediaOrder = useMutation({
     mutationFn: ({ courseId, mediaId, order }: { courseId: number, mediaId: number, order: number }) => 
-      apiRequest(`/api/courses/${courseId}/media/${mediaId}/order`, 'PUT', { order }),
+      apiRequest("PUT", `/api/courses/${courseId}/media/${mediaId}/order`, { order }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses', variables.courseId, 'media'] });
     }

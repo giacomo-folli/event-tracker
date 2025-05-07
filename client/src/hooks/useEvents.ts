@@ -9,7 +9,7 @@ export function useEvents() {
   const eventsQuery = useQuery<{ events: Event[] }>({
     queryKey: ["/api/events"],
     queryFn: async () => {
-      const response = await apiRequest('/api/events');
+      const response = await apiRequest("GET", '/api/events');
       return response.json();
     },
   });
@@ -17,7 +17,7 @@ export function useEvents() {
   // Create event mutation
   const createEventMutation = useMutation({
     mutationFn: (newEvent: Omit<Event, "id">) => 
-      apiRequest("/api/events", "POST", newEvent),
+      apiRequest("POST", "/api/events", newEvent),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
     }
@@ -26,7 +26,7 @@ export function useEvents() {
   // Update event mutation
   const updateEventMutation = useMutation({
     mutationFn: ({ id, ...event }: Event) => 
-      apiRequest(`/api/events/${id}`, "PUT", event),
+      apiRequest("PUT", `/api/events/${id}`, event),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
     }
@@ -35,7 +35,7 @@ export function useEvents() {
   // Delete event mutation
   const deleteEventMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest(`/api/events/${id}`, "DELETE"),
+      apiRequest("DELETE", `/api/events/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
     }
