@@ -51,12 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      console.log("Logging in...");
-      const res = await apiRequest("POST", "/api/login", credentials);
-      const result = await res.json();
-      return result;
+      console.log("Logging in with credentials:", credentials);
+      try {
+        const res = await apiRequest("POST", "/api/login", credentials);
+        console.log("Login response status:", res.status);
+        const result = await res.json();
+        console.log("Login response data:", result);
+        return result;
+      } catch (error) {
+        console.error("Login error:", error);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      console.log("Login success, updating user data:", data);
       queryClient.setQueryData(["/api/user"], data);
       toast({
         title: "Login successful",
@@ -67,9 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.location.href = "/";
     },
     onError: (error: Error) => {
+      console.error("Login mutation error:", error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Invalid username or password",
         variant: "destructive",
       });
     },
