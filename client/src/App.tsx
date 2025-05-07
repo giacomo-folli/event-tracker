@@ -2,6 +2,7 @@ import { Switch, Route } from "wouter";
 import Dashboard from "@/pages/dashboard";
 import Settings from "@/pages/settings";
 import ApiDocs from "@/pages/api-docs";
+import Courses from "@/pages/courses";
 import NotFound from "@/pages/not-found";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useState } from "react";

@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema } from "@shared/schema";
+import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -154,6 +154,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to update password" });
+    }
+  });
+  
+  // REST endpoints for courses
+  app.get("/api/courses", async (req: Request, res: Response) => {
+    try {
+      const courses = await storage.getCourses();
+      res.json({ courses });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch courses" });
+    }
+  });
+
+  app.get("/api/courses/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+
+      const course = await storage.getCourse(id);
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      res.json({ course });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch course" });
+    }
+  });
+
+  app.post("/api/courses", async (req: Request, res: Response) => {
+    try {
+      const result = insertCourseSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.format() });
+      }
+
+      // Default creatorId to 1 (admin) for now
+      const courseData = { ...result.data, creatorId: 1 };
+      const course = await storage.createCourse(courseData);
+      res.status(201).json({ course });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create course" });
+    }
+  });
+
+  app.put("/api/courses/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+
+      const result = updateCourseSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.format() });
+      }
+
+      const updatedCourse = await storage.updateCourse(id, result.data);
+      if (!updatedCourse) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      res.json({ course: updatedCourse });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update course" });
+    }
+  });
+
+  app.delete("/api/courses/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+
+      const success = await storage.deleteCourse(id);
+      if (!success) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete course" });
     }
   });
 
