@@ -107,6 +107,15 @@ export function EventList({ events, onEventChange }: EventListProps) {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => setShareEvent(event)}
+                      className="text-blue-600 hover:text-blue-700 mr-2"
+                    >
+                      <Share2 className="h-4 w-4" />
+                      <span className="sr-only">Share</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleEditClick(event)}
                       className="text-primary hover:text-primary mr-2"
                     >
@@ -145,6 +154,14 @@ export function EventList({ events, onEventChange }: EventListProps) {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900 truncate">{event.title}</h3>
                   <div className="ml-2 flex-shrink-0 flex">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShareEvent(event)}
+                      className="mr-1 text-blue-600 hover:bg-blue-50"
+                    >
+                      <Share2 className="h-5 w-5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -232,6 +249,15 @@ export function EventList({ events, onEventChange }: EventListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Share dialog */}
+      {shareEvent && (
+        <EventShareDialog 
+          event={shareEvent} 
+          isOpen={!!shareEvent} 
+          onClose={() => setShareEvent(null)} 
+        />
+      )}
     </>
   );
 }
