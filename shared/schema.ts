@@ -92,24 +92,30 @@ export const userSettingsFormSchema = updateUserSettingsSchema.extend({
   email: z.string().email("Invalid email address"),
 });
 
-export const insertCourseSchema = createInsertSchema(courses).pick({
-  title: true,
-  description: true,
-  instructor: true,
-  level: true,
-  duration: true,
-  startDate: true,
-  creatorId: true,
-});
+export const insertCourseSchema = createInsertSchema(courses)
+  .pick({
+    title: true,
+    description: true,
+    instructor: true,
+    level: true,
+    duration: true,
+    creatorId: true,
+  })
+  .extend({
+    startDate: z.coerce.date().optional(),
+  });
 
-export const updateCourseSchema = createInsertSchema(courses).pick({
-  title: true,
-  description: true,
-  instructor: true,
-  level: true,
-  duration: true,
-  startDate: true,
-});
+export const updateCourseSchema = createInsertSchema(courses)
+  .pick({
+    title: true,
+    description: true,
+    instructor: true,
+    level: true,
+    duration: true,
+  })
+  .extend({
+    startDate: z.coerce.date().optional(),
+  });
 
 // Extended schema with validation for course form
 export const courseFormSchema = insertCourseSchema.extend({
