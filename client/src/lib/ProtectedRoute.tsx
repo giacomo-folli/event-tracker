@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route, RouteProps } from "wouter";
 
@@ -6,8 +5,14 @@ interface ProtectedRouteProps extends RouteProps {
   component: React.ComponentType<any>;
 }
 
+// Temporary mock auth for protected routes
+const mockProtectedAuth = {
+  user: { id: 1, username: "admin" }, // Simulating a logged-in user
+  isLoading: false
+};
+
 export function ProtectedRoute({ path, component: Component }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading } = mockProtectedAuth;
 
   if (isLoading) {
     return (

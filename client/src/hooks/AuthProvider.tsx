@@ -4,9 +4,11 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { User as SelectUser } from "@shared/schema";
+import { User } from "../../shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "../hooks/use-toast";
+
+type SelectUser = User;
 
 type SafeUser = Omit<SelectUser, "password">;
 
@@ -132,5 +134,10 @@ export function useAuth() {
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context;
+  return {
+    ...context,
+    // Add these properties for backward compatibility with existing components
+    logout: context.logoutMutation.mutate,
+    isLoggingOut: context.logoutMutation.isPending
+  };
 }

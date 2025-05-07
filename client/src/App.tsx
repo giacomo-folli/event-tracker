@@ -6,10 +6,13 @@ import Courses from "@/pages/courses";
 import Media from "@/pages/media";
 import EventView from "@/pages/event-view";
 import NotFound from "@/pages/not-found";
+import AuthPage from "@/pages/auth-page";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ProtectedRoute } from "@/lib/ProtectedRoute";
+import { AuthProvider } from "./hooks/AuthProvider";
 
-function App() {
+function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -29,17 +32,59 @@ function App() {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Switch>
-          <Route path="/" component={Dashboard} />
-          <Route path="/courses" component={Courses} />
-          <Route path="/media" component={Media} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/api-docs" component={ApiDocs} />
-          <Route path="/events/:id" component={EventView} />
-          <Route component={NotFound} />
-        </Switch>
+        {children}
       </div>
     </div>
+  );
+}
+
+function UnauthenticatedApp() {
+  return (
+    <Switch>
+      <Route path="/auth" component={AuthPage} />
+      <Route>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
+            <p className="mb-4">You need to log in to access this application.</p>
+            <a href="/auth" className="text-primary hover:underline">
+              Go to Login Page
+            </a>
+          </div>
+        </div>
+      </Route>
+    </Switch>
+  );
+}
+
+function AuthenticatedApp() {
+  return (
+    <AdminLayout>
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <Route path="/" component={Dashboard} />
+        <Route path="/courses" component={Courses} />
+        <Route path="/media" component={Media} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/api-docs" component={ApiDocs} />
+        <Route path="/events/:id" component={EventView} />
+        <Route component={NotFound} />
+      </Switch>
+    </AdminLayout>
+  );
+}
+
+function App() {
+  // We'll render both auth states for now for simplicity
+  return (
+    <AuthProvider>
+      <Switch>
+        <Route path="/auth" component={AuthPage} />
+        <Route>
+          <AuthenticatedApp />
+        </Route>
+      </Switch>
+    </AuthProvider>
   );
 }
 

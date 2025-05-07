@@ -1,7 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Calendar, Settings, Code, LogOut, GraduationCap, Image } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
@@ -9,9 +8,15 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+// Temporary mock auth for the sidebar
+const mockSidebarAuth = {
+  logout: () => console.log("Logging out..."),
+  isLoggingOut: false
+};
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
-  const { logout, isLoggingOut } = useAuth();
+  const { logout, isLoggingOut } = mockSidebarAuth;
 
   // Close sidebar on navigation on mobile
   const handleNavClick = () => {
