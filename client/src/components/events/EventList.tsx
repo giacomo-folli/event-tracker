@@ -21,11 +21,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Clock, MapPin, Trash, Pencil, Share2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Trash, Pencil, Share2, Users } from "lucide-react";
 import { EventForm } from "./EventForm";
 import { EventShareDialog } from "./EventShareDialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { Link } from "wouter";
 
 interface EventListProps {
   events: Event[];

@@ -69,6 +69,7 @@ function AuthenticatedApp() {
         <Route path="/settings" component={Settings} />
         <Route path="/api-docs" component={ApiDocs} />
         <Route path="/events/:id" component={EventView} />
+        <Route path="/admin/events/:id" component={EventDetailsPage} />
         <Route component={NotFound} />
       </Switch>
     </AdminLayout>

@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import ParticipantsList from "./ParticipantsList";
-import EventForm from "./EventForm";
+import { EditEventForm } from "./EditEventForm";
 
 interface EventDetailsProps {
   event: Event;
@@ -48,7 +48,7 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
               
               <div className="pt-4 border-t">
                 <h3 className="mb-4 text-lg font-medium">Edit Event</h3>
-                <EventForm event={event} onSubmit={onSave} />
+                <EditEventForm event={event} onSave={onSave} />
               </div>
             </div>
           </TabsContent>
