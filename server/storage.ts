@@ -1,4 +1,5 @@
 import { users, events, courses, type User, type InsertUser, type UpdateUserSettings, type Event, type InsertEvent, type UpdateEvent, type Course, type InsertCourse, type UpdateCourse } from "@shared/schema";
+import { DatabaseStorage } from "./database-storage";
 
 export interface IStorage {
   // User methods
@@ -213,4 +214,5 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Use the DatabaseStorage implementation instead of MemStorage
+export const storage = new DatabaseStorage();
