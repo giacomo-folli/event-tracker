@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -34,6 +35,51 @@ export const courses = pgTable("courses", {
   startDate: timestamp("start_date"),
   creatorId: integer("creator_id").references(() => users.id),
 });
+
+// Media type enum
+export const mediaTypeEnum = pgEnum("media_type", ["image", "video", "document", "audio"]);
+
+// Media table
+export const media = pgTable("media", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  fileName: text("file_name").notNull(),
+  filePath: text("file_path").notNull(),
+  fileSize: integer("file_size").notNull(),
+  fileType: text("file_type").notNull(), // MIME type
+  mediaType: mediaTypeEnum("media_type").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  creatorId: integer("creator_id").references(() => users.id),
+});
+
+// Course media relations (many-to-many)
+export const courseMedia = pgTable("course_media", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  mediaId: integer("media_id").notNull().references(() => media.id, { onDelete: "cascade" }),
+  order: integer("order").default(0), // For ordering media within a course
+});
+
+// Relations
+export const coursesRelations = relations(courses, ({ many }) => ({
+  courseMedia: many(courseMedia),
+}));
+
+export const mediaRelations = relations(media, ({ many }) => ({
+  courseMedia: many(courseMedia),
+}));
+
+export const courseMediaRelations = relations(courseMedia, ({ one }) => ({
+  course: one(courses, {
+    fields: [courseMedia.courseId],
+    references: [courses.id],
+  }),
+  media: one(media, {
+    fields: [courseMedia.mediaId],
+    references: [media.id],
+  }),
+}));
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -142,6 +188,43 @@ export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type UpdateEvent = z.infer<typeof updateEventSchema>;
 export type Event = typeof events.$inferSelect;
 
+export const insertMediaSchema = createInsertSchema(media)
+  .pick({
+    title: true,
+    description: true,
+    fileName: true,
+    filePath: true,
+    fileSize: true,
+    fileType: true,
+    mediaType: true,
+    creatorId: true,
+  });
+
+export const updateMediaSchema = createInsertSchema(media)
+  .pick({
+    title: true,
+    description: true,
+  });
+
+export const mediaFormSchema = insertMediaSchema.extend({
+  title: z.string().min(1, "Title is required"),
+  file: z.instanceof(File).optional(),
+});
+
+export const insertCourseMediaSchema = createInsertSchema(courseMedia)
+  .pick({
+    courseId: true,
+    mediaId: true,
+    order: true,
+  });
+
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type UpdateCourse = z.infer<typeof updateCourseSchema>;
 export type Course = typeof courses.$inferSelect;
+
+export type InsertMedia = z.infer<typeof insertMediaSchema>;
+export type UpdateMedia = z.infer<typeof updateMediaSchema>;
+export type Media = typeof media.$inferSelect;
+
+export type InsertCourseMedia = z.infer<typeof insertCourseMediaSchema>;
+export type CourseMedia = typeof courseMedia.$inferSelect;

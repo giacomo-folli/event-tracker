@@ -1,4 +1,11 @@
-import { users, events, courses, type User, type InsertUser, type UpdateUserSettings, type Event, type InsertEvent, type UpdateEvent, type Course, type InsertCourse, type UpdateCourse } from "@shared/schema";
+import { 
+  users, events, courses, media, courseMedia,
+  type User, type InsertUser, type UpdateUserSettings,
+  type Event, type InsertEvent, type UpdateEvent,
+  type Course, type InsertCourse, type UpdateCourse,
+  type Media, type InsertMedia, type UpdateMedia,
+  type CourseMedia, type InsertCourseMedia
+} from "@shared/schema";
 import { DatabaseStorage } from "./database-storage";
 
 export interface IStorage {
@@ -21,6 +28,19 @@ export interface IStorage {
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: number, course: UpdateCourse): Promise<Course | undefined>;
   deleteCourse(id: number): Promise<boolean>;
+  
+  // Media methods
+  getMedia(): Promise<Media[]>;
+  getMediaById(id: number): Promise<Media | undefined>;
+  createMedia(media: InsertMedia): Promise<Media>;
+  updateMedia(id: number, media: UpdateMedia): Promise<Media | undefined>;
+  deleteMedia(id: number): Promise<boolean>;
+  
+  // Course-media relation methods
+  getCourseMedia(courseId: number): Promise<(Media & { order: number })[]>;
+  linkMediaToCourse(courseId: number, mediaId: number, order?: number): Promise<CourseMedia>;
+  unlinkMediaFromCourse(courseId: number, mediaId: number): Promise<boolean>;
+  updateMediaOrder(courseId: number, mediaId: number, order: number): Promise<CourseMedia | undefined>;
 }
 
 export class MemStorage implements IStorage {
