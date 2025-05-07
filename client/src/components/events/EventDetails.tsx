@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useEventSharing } from "@/hooks/useEventSharing";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Link, ExternalLink } from "lucide-react";
+import { Link as LinkIcon, ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -136,7 +136,7 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
               {event.isShared && event.shareUrl && (
                 <div className="border rounded-md p-4 bg-gray-50">
                   <h4 className="text-sm font-medium mb-2 flex items-center">
-                    <Link className="h-4 w-4 mr-1" />
+                    <LinkIcon className="h-4 w-4 mr-1" />
                     Share Link
                   </h4>
                   

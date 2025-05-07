@@ -160,6 +160,9 @@ export const updateEventSharingSchema = createInsertSchema(events).partial().pic
   shareUrl: true,
 });
 
+// Define a new type specifically for partial event updates
+export type UpdateEventSharing = z.infer<typeof updateEventSharingSchema>;
+
 // Extended schemas with validation
 export const eventFormSchema = insertEventSchema.extend({
   title: z.string().min(1, "Title is required"),
