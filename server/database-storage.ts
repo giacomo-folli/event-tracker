@@ -62,7 +62,10 @@ export class DatabaseStorage implements IStorage {
       location: events.location,
       startDate: events.startDate,
       endDate: events.endDate,
-      creatorId: events.creatorId
+      creatorId: events.creatorId,
+      isShared: events.isShared,
+      shareToken: events.shareToken,
+      shareUrl: events.shareUrl
     }).from(events);
   }
   
@@ -74,7 +77,10 @@ export class DatabaseStorage implements IStorage {
       location: events.location,
       startDate: events.startDate,
       endDate: events.endDate,
-      creatorId: events.creatorId
+      creatorId: events.creatorId,
+      isShared: events.isShared,
+      shareToken: events.shareToken,
+      shareUrl: events.shareUrl
     }).from(events).where(eq(events.id, id));
     return event || undefined;
   }
