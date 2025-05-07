@@ -55,14 +55,17 @@ export const updateUserSettingsSchema = createInsertSchema(users).pick({
   apiChangeNotifications: true,
 });
 
-export const insertEventSchema = createInsertSchema(events).pick({
-  title: true,
-  description: true,
-  location: true,
-  startDate: true,
-  endDate: true,
-  creatorId: true,
-});
+export const insertEventSchema = createInsertSchema(events)
+  .pick({
+    title: true,
+    description: true,
+    location: true,
+    creatorId: true,
+  })
+  .extend({
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+  });
 
 export const updateEventSchema = createInsertSchema(events).pick({
   title: true,
