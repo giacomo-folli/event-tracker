@@ -4,10 +4,11 @@ import { Event } from "@shared/schema";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, MapPin, Share2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Share2, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import { EventShareDialog } from "@/components/events/EventShareDialog";
 import { useToast } from "@/hooks/use-toast";
+import ParticipantRegistrationForm from "@/components/events/ParticipantRegistrationForm";
 
 export default function EventView() {
   const [, params] = useRoute("/events/:id");
@@ -92,79 +93,87 @@ export default function EventView() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <Card className="shadow-lg">
-          <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl font-bold">{event.title}</CardTitle>
-                <CardDescription className="text-blue-100 mt-2">
-                  Hosted by Event Management System
-                </CardDescription>
+      <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2">
+          <Card className="shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-2xl font-bold">{event.title}</CardTitle>
+                  <CardDescription className="text-blue-100 mt-2">
+                    Hosted by Event Management System
+                  </CardDescription>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="secondary" 
+                  className="flex items-center gap-1"
+                  onClick={() => setIsShareDialogOpen(true)}
+                >
+                  <Share2 className="h-4 w-4" />
+                  Share
+                </Button>
               </div>
-              <Button 
-                size="sm" 
-                variant="secondary" 
-                className="flex items-center gap-1"
-                onClick={() => setIsShareDialogOpen(true)}
-              >
-                <Share2 className="h-4 w-4" />
-                Share
-              </Button>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="pt-6 space-y-6">
-            {event.description && (
-              <div>
-                <h3 className="text-lg font-medium">Description</h3>
-                <p className="mt-2 text-gray-700">{event.description}</p>
-              </div>
-            )}
+            </CardHeader>
             
-            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-              <div className="flex items-start">
-                <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
-                <div className="ml-3">
-                  <h4 className="text-sm font-medium text-gray-900">Date</h4>
-                  <p className="text-gray-700">{formatDate(event.startDate)}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <Clock className="h-5 w-5 text-gray-500 mt-0.5" />
-                <div className="ml-3">
-                  <h4 className="text-sm font-medium text-gray-900">Time</h4>
-                  <p className="text-gray-700">
-                    {formatTime(event.startDate)} – {formatTime(event.endDate)}
-                  </p>
-                </div>
-              </div>
-              
-              {event.location && (
-                <div className="flex items-start">
-                  <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
-                  <div className="ml-3">
-                    <h4 className="text-sm font-medium text-gray-900">Location</h4>
-                    <p className="text-gray-700">{event.location}</p>
-                  </div>
+            <CardContent className="pt-6 space-y-6">
+              {event.description && (
+                <div>
+                  <h3 className="text-lg font-medium">Description</h3>
+                  <p className="mt-2 text-gray-700">{event.description}</p>
                 </div>
               )}
-            </div>
-          </CardContent>
-          
-          <CardFooter className="bg-gray-50 border-t flex justify-between items-center">
-            <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">
-              Public Event
-            </Badge>
-            <Button 
-              variant="outline" 
-              onClick={() => window.history.back()}
-            >
-              Go Back
-            </Button>
-          </CardFooter>
-        </Card>
+              
+              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                <div className="flex items-start">
+                  <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <div className="ml-3">
+                    <h4 className="text-sm font-medium text-gray-900">Date</h4>
+                    <p className="text-gray-700">{formatDate(event.startDate)}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
+                  <Clock className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <div className="ml-3">
+                    <h4 className="text-sm font-medium text-gray-900">Time</h4>
+                    <p className="text-gray-700">
+                      {formatTime(event.startDate)} – {formatTime(event.endDate)}
+                    </p>
+                  </div>
+                </div>
+                
+                {event.location && (
+                  <div className="flex items-start">
+                    <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <div className="ml-3">
+                      <h4 className="text-sm font-medium text-gray-900">Location</h4>
+                      <p className="text-gray-700">{event.location}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+            
+            <CardFooter className="bg-gray-50 border-t flex justify-between items-center">
+              <Badge variant="outline" className="text-blue-600 border-blue-300 bg-blue-50">
+                Public Event
+              </Badge>
+              <Button 
+                variant="outline" 
+                onClick={() => window.history.back()}
+              >
+                Go Back
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+        
+        <div className="md:col-span-1">
+          <div className="sticky top-4">
+            <ParticipantRegistrationForm eventId={event.id} eventTitle={event.title} />
+          </div>
+        </div>
       </div>
       
       {event && (

@@ -5,6 +5,7 @@ import ApiDocs from "@/pages/api-docs";
 import Courses from "@/pages/courses";
 import Media from "@/pages/media";
 import EventView from "@/pages/event-view";
+import EventDetailsPage from "@/pages/event-details";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { Sidebar } from "@/components/layout/Sidebar";
