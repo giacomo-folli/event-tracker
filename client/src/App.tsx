@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import Dashboard from "@/pages/dashboard";
 import Settings from "@/pages/settings";
 import ApiDocs from "@/pages/api-docs";
@@ -9,7 +9,7 @@ import EventDetailsPage from "@/pages/event-details";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ProtectedRoute } from "@/lib/ProtectedRoute";
 import { AuthProvider, useAuth } from "./hooks/AuthProvider";
 
@@ -76,16 +76,39 @@ function AuthenticatedApp() {
   );
 }
 
+// This is a wrapper component that uses the auth context
+function AppRoutes() {
+  const { user, isLoading } = useAuth();
+  
+  // Show a loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <Switch>
+      {/* Always allow access to auth page */}
+      <Route path="/auth">
+        {user ? <Redirect to="/" /> : <AuthPage />}
+      </Route>
+      
+      {/* All other routes require authentication */}
+      <Route>
+        {user ? <AuthenticatedApp /> : <Redirect to="/auth" />}
+      </Route>
+    </Switch>
+  );
+}
+
+// Main app component that provides the auth context
 function App() {
-  // We'll render both auth states for now for simplicity
   return (
     <AuthProvider>
-      <Switch>
-        <Route path="/auth" component={AuthPage} />
-        <Route>
-          <AuthenticatedApp />
-        </Route>
-      </Switch>
+      <AppRoutes />
     </AuthProvider>
   );
 }
