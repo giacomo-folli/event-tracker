@@ -32,23 +32,12 @@ export async function setupAuth(app: Express) {
   // Create a randomized session secret
   const sessionSecret = process.env.SESSION_SECRET || randomBytes(32).toString('hex');
   
-  // Setup connect-pg-simple for PostgreSQL session storage
-  const connectPg = (await import("connect-pg-simple")).default;
-  const PostgresSessionStore = connectPg(session);
-  
-  // Session store configuration
-  const sessionStore = new PostgresSessionStore({
-    conObject: {
-      connectionString: process.env.DATABASE_URL,
-    },
-    createTableIfMissing: true,
-  });
-
+  // Use the session store from our storage implementation
   const sessionSettings: session.SessionOptions = {
     secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
-    store: sessionStore,
+    store: storage.sessionStore,
     cookie: { 
       secure: process.env.NODE_ENV === 'production',
       maxAge: 1000 * 60 * 60 * 24 * 7 // 1 week

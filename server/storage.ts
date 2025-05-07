@@ -10,6 +10,9 @@ import { DatabaseStorage } from "./database-storage";
 import session from "express-session";
 
 export interface IStorage {
+  // Session store for authentication
+  sessionStore: session.Store;
+  
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -48,11 +51,21 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private events: Map<number, Event>;
   private courses: Map<number, Course>;
+  private media: Map<number, Media> = new Map();
+  private courseMediaRelations: Map<string, CourseMedia> = new Map(); // Key is `${courseId}-${mediaId}`
   private userCurrentId: number;
   private eventCurrentId: number;
-  private courseCurrentId: number;
+  private courseCurrentId: number; 
+  private mediaCurrentId: number = 1;
+  public sessionStore: session.Store;
 
   constructor() {
+    // Create memory store for session storage
+    const MemoryStore = require('memorystore')(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
+    
     this.users = new Map();
     this.events = new Map();
     this.courses = new Map();
@@ -232,6 +245,79 @@ export class MemStorage implements IStorage {
   
   async deleteCourse(id: number): Promise<boolean> {
     return this.courses.delete(id);
+  }
+
+  // Media methods
+  async getMedia(): Promise<Media[]> {
+    return Array.from(this.media.values());
+  }
+  
+  async getMediaById(id: number): Promise<Media | undefined> {
+    return this.media.get(id);
+  }
+  
+  async createMedia(insertMedia: InsertMedia): Promise<Media> {
+    const id = this.mediaCurrentId++;
+    const media: Media = { 
+      ...insertMedia, 
+      id,
+      description: insertMedia.description ?? null,
+      creatorId: insertMedia.creatorId ?? null 
+    };
+    this.media.set(id, media);
+    return media;
+  }
+  
+  async updateMedia(id: number, updateData: UpdateMedia): Promise<Media | undefined> {
+    const mediaItem = this.media.get(id);
+    if (!mediaItem) return undefined;
+    
+    const updatedMedia = { ...mediaItem, ...updateData };
+    this.media.set(id, updatedMedia);
+    return updatedMedia;
+  }
+  
+  async deleteMedia(id: number): Promise<boolean> {
+    return this.media.delete(id);
+  }
+  
+  // Course-media relation methods
+  async getCourseMedia(courseId: number): Promise<(Media & { order: number })[]> {
+    const courseMediaItems: CourseMedia[] = Array.from(this.courseMediaRelations.values())
+      .filter(cm => cm.courseId === courseId);
+    
+    const result: (Media & { order: number })[] = [];
+    
+    for (const cm of courseMediaItems) {
+      const media = this.media.get(cm.mediaId);
+      if (media) {
+        result.push({ ...media, order: cm.order });
+      }
+    }
+    
+    return result;
+  }
+  
+  async linkMediaToCourse(courseId: number, mediaId: number, order: number = 0): Promise<CourseMedia> {
+    const key = `${courseId}-${mediaId}`;
+    const relation: CourseMedia = { id: courseId * 1000 + mediaId, courseId, mediaId, order };
+    this.courseMediaRelations.set(key, relation);
+    return relation;
+  }
+  
+  async unlinkMediaFromCourse(courseId: number, mediaId: number): Promise<boolean> {
+    const key = `${courseId}-${mediaId}`;
+    return this.courseMediaRelations.delete(key);
+  }
+  
+  async updateMediaOrder(courseId: number, mediaId: number, order: number): Promise<CourseMedia | undefined> {
+    const key = `${courseId}-${mediaId}`;
+    const relation = this.courseMediaRelations.get(key);
+    if (!relation) return undefined;
+    
+    const updatedRelation = { ...relation, order };
+    this.courseMediaRelations.set(key, updatedRelation);
+    return updatedRelation;
   }
 }
 
