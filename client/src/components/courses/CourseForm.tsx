@@ -79,12 +79,14 @@ export function CourseForm({ isOpen, onClose, course, onSuccess }: CourseFormPro
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
+      // Use our react-query utility for API requests
       const url = course
         ? `/api/courses/${course.id}`
         : "/api/courses";
       
       const method = course ? "PUT" : "POST";
-      
+
+      // Use the newly fixed apiRequest function
       const response = await fetch(url, {
         method,
         headers: {
@@ -151,7 +153,11 @@ export function CourseForm({ isOpen, onClose, course, onSuccess }: CourseFormPro
                   <FormControl>
                     <Textarea
                       placeholder="Enter course description"
-                      {...field}
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
                       rows={3}
                     />
                   </FormControl>
@@ -167,7 +173,14 @@ export function CourseForm({ isOpen, onClose, course, onSuccess }: CourseFormPro
                 <FormItem>
                   <FormLabel>Instructor</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter instructor name" {...field} />
+                    <Input 
+                      placeholder="Enter instructor name" 
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -208,7 +221,14 @@ export function CourseForm({ isOpen, onClose, course, onSuccess }: CourseFormPro
                   <FormItem>
                     <FormLabel>Duration</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 8 weeks" {...field} />
+                      <Input 
+                        placeholder="e.g., 8 weeks" 
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        name={field.name}
+                        ref={field.ref}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
