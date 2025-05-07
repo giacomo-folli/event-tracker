@@ -51,17 +51,20 @@ async function populateDatabase() {
     
     // Course 1: JavaScript
     const courseStart1 = new Date(now.getFullYear(), now.getMonth() + 1, 5);
+    console.log('Course 1 date:', courseStart1.toISOString());
+    const courseData1 = {
+      title: "Introduction to JavaScript",
+      description: "Learn the fundamentals of JavaScript programming language.",
+      instructor: "Jane Smith",
+      level: "beginner",
+      duration: "8 weeks",
+      startDate: courseStart1.toISOString(),
+    };
+    console.log('Course 1 payload:', JSON.stringify(courseData1));
     const course1 = await fetch('http://localhost:5000/api/courses', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: "Introduction to JavaScript",
-        description: "Learn the fundamentals of JavaScript programming language.",
-        instructor: "Jane Smith",
-        level: "beginner",
-        duration: "8 weeks",
-        startDate: courseStart1.toISOString(),
-      }),
+      body: JSON.stringify(courseData1),
     });
     
     const course1Data = await course1.json();

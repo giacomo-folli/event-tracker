@@ -14,17 +14,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({ message: "Admin user already exists", user: existingUser });
       }
 
-      // Create default admin user
-      const user = await storage.createUser({
-        username: "admin",
-        password: "password",
-        firstName: "John",
-        lastName: "Doe",
-        email: "john.doe@example.com",
-        emailNotifications: true,
-        browserNotifications: false,
-        apiChangeNotifications: true,
-      });
+      // Create default admin user with data from request body or fallback to defaults
+      const userData = {
+        username: req.body.username || "admin",
+        password: req.body.password || "password",
+        firstName: req.body.firstName || "John",
+        lastName: req.body.lastName || "Doe",
+        email: req.body.email || "john.doe@example.com",
+        emailNotifications: req.body.emailNotifications !== undefined ? req.body.emailNotifications : true,
+        browserNotifications: req.body.browserNotifications !== undefined ? req.body.browserNotifications : false,
+        apiChangeNotifications: req.body.apiChangeNotifications !== undefined ? req.body.apiChangeNotifications : true,
+      };
+      
+      const user = await storage.createUser(userData);
       
       res.status(201).json({ message: "Admin user created", user });
     } catch (error) {
