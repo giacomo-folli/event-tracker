@@ -105,11 +105,33 @@ export class DatabaseStorage implements IStorage {
   
   // Media methods
   async getMedia(): Promise<Media[]> {
-    return db.select().from(media).orderBy(desc(media.uploadedAt));
+    return await db.select({
+      id: media.id,
+      title: media.title,
+      description: media.description,
+      fileName: media.fileName,
+      filePath: media.filePath,
+      fileSize: media.fileSize,
+      fileType: media.fileType,
+      mediaType: media.mediaType,
+      uploadedAt: media.uploadedAt,
+      creatorId: media.creatorId
+    }).from(media).orderBy(desc(media.uploadedAt));
   }
   
   async getMediaById(id: number): Promise<Media | undefined> {
-    const [mediaItem] = await db.select().from(media).where(eq(media.id, id));
+    const [mediaItem] = await db.select({
+      id: media.id,
+      title: media.title,
+      description: media.description,
+      fileName: media.fileName,
+      filePath: media.filePath,
+      fileSize: media.fileSize,
+      fileType: media.fileType,
+      mediaType: media.mediaType,
+      uploadedAt: media.uploadedAt,
+      creatorId: media.creatorId
+    }).from(media).where(eq(media.id, id));
     return mediaItem || undefined;
   }
   
@@ -140,7 +162,16 @@ export class DatabaseStorage implements IStorage {
   async getCourseMedia(courseId: number): Promise<(Media & { order: number })[]> {
     const result = await db
       .select({
-        ...media,
+        id: media.id,
+        title: media.title,
+        description: media.description,
+        fileName: media.fileName,
+        filePath: media.filePath,
+        fileSize: media.fileSize,
+        fileType: media.fileType,
+        mediaType: media.mediaType,
+        uploadedAt: media.uploadedAt,
+        creatorId: media.creatorId,
         order: courseMedia.order
       })
       .from(courseMedia)
@@ -148,7 +179,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(courseMedia.courseId, courseId))
       .orderBy(asc(courseMedia.order));
     
-    return result;
+    return result as any;
   }
   
   async linkMediaToCourse(courseId: number, mediaId: number, order: number = 0): Promise<CourseMedia> {
