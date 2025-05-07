@@ -1,4 +1,4 @@
-import { users, events, type User, type InsertUser, type UpdateUserSettings, type Event, type InsertEvent, type UpdateEvent } from "@shared/schema";
+import { users, events, courses, type User, type InsertUser, type UpdateUserSettings, type Event, type InsertEvent, type UpdateEvent, type Course, type InsertCourse, type UpdateCourse } from "@shared/schema";
 
 export interface IStorage {
   // User methods
@@ -13,19 +13,30 @@ export interface IStorage {
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(id: number, event: UpdateEvent): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
+  
+  // Course methods
+  getCourses(): Promise<Course[]>;
+  getCourse(id: number): Promise<Course | undefined>;
+  createCourse(course: InsertCourse): Promise<Course>;
+  updateCourse(id: number, course: UpdateCourse): Promise<Course | undefined>;
+  deleteCourse(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private events: Map<number, Event>;
+  private courses: Map<number, Course>;
   private userCurrentId: number;
   private eventCurrentId: number;
+  private courseCurrentId: number;
 
   constructor() {
     this.users = new Map();
     this.events = new Map();
+    this.courses = new Map();
     this.userCurrentId = 1;
     this.eventCurrentId = 1;
+    this.courseCurrentId = 1;
     
     // Add a default admin user
     this.createUser({
@@ -78,6 +89,40 @@ export class MemStorage implements IStorage {
       location: "City Park",
       startDate: startDate3,
       endDate: endDate3,
+      creatorId: 1
+    });
+    
+    // Add sample courses
+    const courseStart1 = new Date(now.getFullYear(), now.getMonth() + 1, 5);
+    this.createCourse({
+      title: "Introduction to JavaScript",
+      description: "Learn the fundamentals of JavaScript programming language.",
+      instructor: "Jane Smith",
+      level: "beginner",
+      duration: "8 weeks",
+      startDate: courseStart1,
+      creatorId: 1
+    });
+    
+    const courseStart2 = new Date(now.getFullYear(), now.getMonth() + 2, 10);
+    this.createCourse({
+      title: "Advanced React Development",
+      description: "Master React hooks, context API, and advanced state management.",
+      instructor: "Michael Johnson",
+      level: "advanced",
+      duration: "6 weeks",
+      startDate: courseStart2,
+      creatorId: 1
+    });
+    
+    const courseStart3 = new Date(now.getFullYear(), now.getMonth(), 15);
+    this.createCourse({
+      title: "Database Design Fundamentals",
+      description: "Learn relational database concepts and SQL query optimization.",
+      instructor: "Sarah Wilson",
+      level: "intermediate",
+      duration: "4 weeks",
+      startDate: courseStart3,
       creatorId: 1
     });
   }
@@ -136,6 +181,35 @@ export class MemStorage implements IStorage {
   
   async deleteEvent(id: number): Promise<boolean> {
     return this.events.delete(id);
+  }
+  
+  // Course methods
+  async getCourses(): Promise<Course[]> {
+    return Array.from(this.courses.values());
+  }
+  
+  async getCourse(id: number): Promise<Course | undefined> {
+    return this.courses.get(id);
+  }
+  
+  async createCourse(insertCourse: InsertCourse): Promise<Course> {
+    const id = this.courseCurrentId++;
+    const course: Course = { ...insertCourse, id };
+    this.courses.set(id, course);
+    return course;
+  }
+  
+  async updateCourse(id: number, updateData: UpdateCourse): Promise<Course | undefined> {
+    const course = this.courses.get(id);
+    if (!course) return undefined;
+    
+    const updatedCourse = { ...course, ...updateData };
+    this.courses.set(id, updatedCourse);
+    return updatedCourse;
+  }
+  
+  async deleteCourse(id: number): Promise<boolean> {
+    return this.courses.delete(id);
   }
 }
 

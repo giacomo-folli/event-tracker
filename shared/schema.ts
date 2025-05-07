@@ -24,6 +24,17 @@ export const events = pgTable("events", {
   creatorId: integer("creator_id").references(() => users.id),
 });
 
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  instructor: text("instructor"),
+  level: text("level"), // beginner, intermediate, advanced
+  duration: text("duration"),
+  startDate: timestamp("start_date"),
+  creatorId: integer("creator_id").references(() => users.id),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -78,6 +89,33 @@ export const userSettingsFormSchema = updateUserSettingsSchema.extend({
   email: z.string().email("Invalid email address"),
 });
 
+export const insertCourseSchema = createInsertSchema(courses).pick({
+  title: true,
+  description: true,
+  instructor: true,
+  level: true,
+  duration: true,
+  startDate: true,
+  creatorId: true,
+});
+
+export const updateCourseSchema = createInsertSchema(courses).pick({
+  title: true,
+  description: true,
+  instructor: true,
+  level: true,
+  duration: true,
+  startDate: true,
+});
+
+// Extended schema with validation for course form
+export const courseFormSchema = insertCourseSchema.extend({
+  title: z.string().min(1, "Title is required"),
+  instructor: z.string().min(1, "Instructor name is required"),
+  level: z.string().min(1, "Level is required"),
+  startDate: z.coerce.date().optional(),
+});
+
 export const passwordUpdateSchema = z.object({
   currentPassword: z.string().min(6, "Password must be at least 6 characters"),
   newPassword: z.string().min(6, "Password must be at least 6 characters"),
@@ -94,3 +132,7 @@ export type User = typeof users.$inferSelect;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type UpdateEvent = z.infer<typeof updateEventSchema>;
 export type Event = typeof events.$inferSelect;
+
+export type InsertCourse = z.infer<typeof insertCourseSchema>;
+export type UpdateCourse = z.infer<typeof updateCourseSchema>;
+export type Course = typeof courses.$inferSelect;
