@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,8 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 
 // Login form schema
 const loginSchema = z.object({
@@ -32,9 +32,16 @@ type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
   const [_, setLocation] = useLocation();
+  const { user, loginMutation, registerMutation } = useAuth();
+  const { toast } = useToast();
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (user) {
+      setLocation("/");
+    }
+  }, [user, setLocation]);
 
   // Handle login form
   const loginForm = useForm<LoginFormValues>({
@@ -57,60 +64,26 @@ export default function AuthPage() {
     },
   });
 
+  // Loading states from mutations
+  const isLoginLoading = loginMutation.isPending;
+  const isRegisterLoading = registerMutation.isPending;
+
   // Handle login submission
   const handleLogin = async (data: LoginFormValues) => {
-    try {
-      setIsLoading(true);
-      const response = await apiRequest("/api/login", "POST", data);
-      const result = await response.json();
-      
-      if (response.ok) {
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${result.user.firstName}!`,
-        });
-        setLocation("/"); // Redirect to dashboard
-      } else {
-        throw new Error(result.error || "Login failed");
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        setLocation("/");
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Something went wrong",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   // Handle registration submission
   const handleRegister = async (data: RegistrationFormValues) => {
-    try {
-      setIsLoading(true);
-      const response = await apiRequest("/api/register", "POST", data);
-      const result = await response.json();
-      
-      if (response.ok) {
-        toast({
-          title: "Registration successful",
-          description: `Welcome, ${result.user.firstName}!`,
-        });
-        setLocation("/"); // Redirect to dashboard
-      } else {
-        throw new Error(result.error || "Registration failed");
+    registerMutation.mutate(data, {
+      onSuccess: () => {
+        setLocation("/");
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Something went wrong",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   return (
@@ -227,7 +200,7 @@ export default function AuthPage() {
                                   <Input
                                     placeholder="Enter your username"
                                     {...field}
-                                    disabled={isLoading}
+                                    disabled={isLoginLoading}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -246,7 +219,7 @@ export default function AuthPage() {
                                     type="password"
                                     placeholder="Enter your password"
                                     {...field}
-                                    disabled={isLoading}
+                                    disabled={isLoginLoading}
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -257,9 +230,9 @@ export default function AuthPage() {
                           <Button
                             type="submit"
                             className="w-full"
-                            disabled={isLoading}
+                            disabled={isLoginLoading}
                           >
-                            {isLoading ? (
+                            {isLoginLoading ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
                                 Logging in...
