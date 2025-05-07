@@ -156,10 +156,37 @@ export default function SharedEventPage() {
             </CardHeader>
             
             <CardContent>
-              {showRegistrationForm ? (
+              {registrationSuccess ? (
+                <div className="text-center py-6">
+                  <div className="h-12 w-12 bg-green-100 text-green-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium mb-2">Registration Successful!</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Thank you for registering for this event. You'll receive updates via email.
+                  </p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setRegistrationSuccess(false)}
+                    className="w-full"
+                  >
+                    Register another person
+                  </Button>
+                </div>
+              ) : showRegistrationForm ? (
                 <ParticipantRegistrationForm 
                   eventId={event.id}
                   eventTitle={event.title}
+                  onSuccessfulRegistration={() => {
+                    toast({
+                      title: "Success!",
+                      description: "You have successfully registered for this event.",
+                    });
+                    setRegistrationSuccess(true);
+                    setShowRegistrationForm(false);
+                  }}
                 />
               ) : (
                 <div className="text-center py-6">

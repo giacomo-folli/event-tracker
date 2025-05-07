@@ -16,9 +16,14 @@ type FormValues = z.infer<typeof eventParticipantFormSchema>;
 interface ParticipantRegistrationFormProps {
   eventId: number;
   eventTitle: string;
+  onSuccessfulRegistration?: () => void;
 }
 
-export default function ParticipantRegistrationForm({ eventId, eventTitle }: ParticipantRegistrationFormProps) {
+export default function ParticipantRegistrationForm({ 
+  eventId, 
+  eventTitle,
+  onSuccessfulRegistration 
+}: ParticipantRegistrationFormProps) {
   const [success, setSuccess] = useState(false);
   const { registerParticipant, isRegistering } = useParticipants();
 
@@ -36,6 +41,11 @@ export default function ParticipantRegistrationForm({ eventId, eventTitle }: Par
       onSuccess: () => {
         setSuccess(true);
         form.reset();
+        
+        // If parent component provided a success callback, call it
+        if (onSuccessfulRegistration) {
+          onSuccessfulRegistration();
+        }
       }
     });
   }
