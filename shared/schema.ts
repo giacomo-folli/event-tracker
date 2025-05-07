@@ -23,6 +23,9 @@ export const events = pgTable("events", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   creatorId: integer("creator_id").references(() => users.id),
+  isShared: boolean("is_shared").default(false).notNull(),
+  shareToken: text("share_token").unique(),
+  shareUrl: text("share_url"),
 });
 
 export const courses = pgTable("courses", {
@@ -145,6 +148,7 @@ export const updateEventSchema = createInsertSchema(events).pick({
   location: true,
   startDate: true,
   endDate: true,
+  isShared: true,
 });
 
 // Extended schemas with validation
