@@ -10,7 +10,7 @@ export function useEvents() {
     queryKey: ["/api/events"],
     queryFn: async () => {
       const response = await apiRequest('/api/events');
-      return response;
+      return response.json();
     },
   });
   

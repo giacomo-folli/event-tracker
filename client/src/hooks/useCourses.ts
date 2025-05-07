@@ -8,7 +8,7 @@ export function useCourses() {
     queryKey: ['/api/courses'],
     queryFn: async () => {
       const response = await apiRequest('/api/courses');
-      return response;
+      return response.json();
     },
     refetchOnWindowFocus: false,
   });
@@ -19,7 +19,7 @@ export function useCourses() {
       queryKey: ['/api/courses', id],
       queryFn: async () => {
         const response = await apiRequest(`/api/courses/${id}`);
-        return response;
+        return response.json();
       },
       enabled: !!id,
       refetchOnWindowFocus: false,

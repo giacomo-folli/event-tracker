@@ -10,7 +10,7 @@ export function useMedia() {
     queryKey: ['/api/media'],
     queryFn: async () => {
       const response = await apiRequest('/api/media');
-      return response;
+      return response.json();
     },
     staleTime: 1000 * 60, // 1 minute
   });
@@ -21,7 +21,7 @@ export function useMedia() {
       queryKey: ['/api/courses', courseId, 'media'],
       queryFn: async () => {
         const response = await apiRequest(`/api/courses/${courseId}/media`);
-        return response;
+        return response.json();
       },
       staleTime: 1000 * 60, // 1 minute
     });
