@@ -21,7 +21,7 @@ export function useCourses() {
   // Mutation to create a new course
   const createCourseMutation = useMutation({
     mutationFn: (course: Omit<Course, "id">) => 
-      apiRequest("/api/courses", "POST", { body: JSON.stringify(course) }),
+      apiRequest("POST", "/api/courses", course),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
     }
@@ -30,7 +30,7 @@ export function useCourses() {
   // Mutation to update an existing course
   const updateCourseMutation = useMutation({
     mutationFn: ({ id, ...course }: Course) => 
-      apiRequest(`/api/courses/${id}`, "PUT", { body: JSON.stringify(course) }),
+      apiRequest("PUT", `/api/courses/${id}`, course),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/courses', variables.id] });
@@ -40,7 +40,7 @@ export function useCourses() {
   // Mutation to delete a course
   const deleteCourseMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest(`/api/courses/${id}`, "DELETE"),
+      apiRequest("DELETE", `/api/courses/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
     }

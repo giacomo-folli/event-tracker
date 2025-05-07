@@ -50,7 +50,7 @@ export function EventList({ events, onEventChange }: EventListProps) {
     try {
       if (eventToDelete === null) return;
       
-      await apiRequest("DELETE", `/api/events/${eventToDelete}`, undefined);
+      await apiRequest("DELETE", `/api/events/${eventToDelete}`);
       
       toast({
         title: "Event deleted",

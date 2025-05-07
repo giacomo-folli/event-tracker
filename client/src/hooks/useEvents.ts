@@ -31,7 +31,7 @@ export function useEvents() {
   // Delete event mutation
   const deleteEventMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest("DELETE", `/api/events/${id}`, undefined),
+      apiRequest("DELETE", `/api/events/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/events"] });
     }
