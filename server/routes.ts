@@ -179,14 +179,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid event ID" });
       }
       
+      console.log("Toggle sharing request for event ID:", id, "with data:", req.body);
+      
       // Get current event
       const event = await dbStorage.getEvent(id);
       if (!event) {
+        console.log("Event not found with ID:", id);
         return res.status(404).json({ error: "Event not found" });
       }
       
+      console.log("Current event state:", event);
+      
       // Toggle sharing status
       const isShared = req.body.isShared === true;
+      console.log("Setting isShared to:", isShared);
       
       let shareToken = event.shareToken;
       let shareUrl = event.shareUrl;
@@ -195,6 +201,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isShared && !shareToken) {
         shareToken = generateShareToken();
         shareUrl = generateShareUrl(shareToken);
+        console.log("Generated new share token:", shareToken);
+        console.log("Generated share URL:", shareUrl);
       }
       
       // Add the other required fields from the existing event
@@ -208,6 +216,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shareToken,
         shareUrl
       };
+      
+      console.log("Update data:", updateData);
       
       const updatedEvent = await dbStorage.updateEvent(id, updateData);
       

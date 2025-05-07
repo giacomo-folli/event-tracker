@@ -28,10 +28,13 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
   // Function to toggle event sharing
   const handleToggleSharing = async () => {
     try {
+      console.log("Toggling event sharing status:", !event.isShared);
       await toggleSharingMutation.mutateAsync({
         eventId: event.id,
         isShared: !event.isShared
       });
+      // Note: We don't need to update any local state here as the 
+      // query invalidation in the mutation will refresh the data
     } catch (error) {
       console.error('Error toggling event sharing:', error);
     }
@@ -122,25 +125,32 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
               </div>
               
               {event.isShared && event.shareUrl && (
-                <div className="border rounded-md p-3 bg-gray-50 flex justify-between items-center">
-                  <div>
+                <div className="border rounded-md p-3 bg-gray-50">
+                  <div className="flex justify-between items-center mb-2">
                     <h4 className="text-sm font-medium flex items-center">
                       <LinkIcon className="h-4 w-4 mr-1" />
                       Public Link
                     </h4>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center text-xs"
+                      onClick={() => event.shareUrl && window.open(event.shareUrl, '_blank')}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                      View
+                    </Button>
+                  </div>
+                  <div className="mt-2">
+                    <Input 
+                      readOnly 
+                      value={window.location.origin + event.shareUrl}
+                      className="text-xs bg-white font-mono"
+                    />
                     <p className="text-xs text-gray-500 mt-1">
                       This event is publicly viewable at this link
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center text-xs"
-                    onClick={() => event.shareUrl && window.open(event.shareUrl, '_blank')}
-                  >
-                    <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                    View
-                  </Button>
                 </div>
               )}
               

@@ -25,7 +25,9 @@ export function useEventSharing() {
       
       return await response.json();
     },
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
+      console.log("Toggle sharing success:", data);
+      
       // Show different toast messages based on the action (enable/disable sharing)
       toast({
         title: variables.isShared ? "Event shared" : "Event sharing disabled",
@@ -35,8 +37,9 @@ export function useEventSharing() {
       });
       
       // Invalidate event queries to refresh the data
+      console.log("Invalidating queries for event ID:", variables.eventId);
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/events', variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events', variables.eventId.toString()] });
     },
     onError: (error: Error) => {
       toast({
