@@ -56,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/init-admin", async (req: Request, res: Response) => {
     try {
       // Check if admin already exists
-      const existingUser = await storage.getUserByUsername("admin");
+      const existingUser = await dbStorage.getUserByUsername("admin");
       if (existingUser) {
         return res.json({ message: "Admin user already exists", user: existingUser });
       }
@@ -73,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         apiChangeNotifications: req.body.apiChangeNotifications !== undefined ? req.body.apiChangeNotifications : true,
       };
       
-      const user = await storage.createUser(userData);
+      const user = await dbStorage.createUser(userData);
       
       res.status(201).json({ message: "Admin user created", user });
     } catch (error) {
@@ -84,7 +84,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // REST endpoints for events
   app.get("/api/events", async (req: Request, res: Response) => {
     try {
-      const events = await storage.getEvents();
+      const events = await dbStorage.getEvents();
       res.json({ events });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch events" });
@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid event ID" });
       }
 
-      const event = await storage.getEvent(id);
+      const event = await dbStorage.getEvent(id);
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -118,7 +118,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Default creatorId to 1 (admin) for now
       const eventData = { ...result.data, creatorId: 1 };
-      const event = await storage.createEvent(eventData);
+      const event = await dbStorage.createEvent(eventData);
       res.status(201).json({ event });
     } catch (error) {
       res.status(500).json({ error: "Failed to create event" });
@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: result.error.format() });
       }
 
-      const updatedEvent = await storage.updateEvent(id, result.data);
+      const updatedEvent = await dbStorage.updateEvent(id, result.data);
       if (!updatedEvent) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -155,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid event ID" });
       }
 
-      const success = await storage.deleteEvent(id);
+      const success = await dbStorage.deleteEvent(id);
       if (!success) {
         return res.status(404).json({ error: "Event not found" });
       }
@@ -170,7 +170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/user", async (req: Request, res: Response) => {
     try {
       // For simplicity, we'll always return the admin user (id: 1)
-      const user = await storage.getUser(1);
+      const user = await dbStorage.getUser(1);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -191,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // For simplicity, we'll always update the admin user (id: 1)
-      const updatedUser = await storage.updateUserSettings(1, result.data);
+      const updatedUser = await dbStorage.updateUserSettings(1, result.data);
       if (!updatedUser) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -212,7 +212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // For simplicity, we'll check if the current password matches for the admin user
-      const user = await storage.getUser(1);
+      const user = await dbStorage.getUser(1);
       if (!user) {
         return res.status(404).json({ error: "User not found" });
       }
@@ -222,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update the password - need to handle it separately
-      const updatedUser = await storage.updateUserSettings(1, {
+      const updatedUser = await dbStorage.updateUserSettings(1, {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
@@ -244,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/courses", async (req: Request, res: Response) => {
     try {
       console.log("Getting courses...");
-      const courses = await storage.getCourses();
+      const courses = await dbStorage.getCourses();
       console.log("Courses retrieved:", courses);
       res.json({ courses });
     } catch (error) {
@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid course ID" });
       }
 
-      const course = await storage.getCourse(id);
+      const course = await dbStorage.getCourse(id);
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
@@ -280,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Default creatorId to 1 (admin) for now
       const courseData = { ...result.data, creatorId: 1 };
-      const course = await storage.createCourse(courseData);
+      const course = await dbStorage.createCourse(courseData);
       res.status(201).json({ course });
     } catch (error) {
       res.status(500).json({ error: "Failed to create course" });
@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: result.error.format() });
       }
 
-      const updatedCourse = await storage.updateCourse(id, result.data);
+      const updatedCourse = await dbStorage.updateCourse(id, result.data);
       if (!updatedCourse) {
         return res.status(404).json({ error: "Course not found" });
       }
@@ -317,7 +317,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid course ID" });
       }
 
-      const success = await storage.deleteCourse(id);
+      const success = await dbStorage.deleteCourse(id);
       if (!success) {
         return res.status(404).json({ error: "Course not found" });
       }
@@ -331,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // REST endpoints for media
   app.get("/api/media", async (req: Request, res: Response) => {
     try {
-      const mediaItems = await storage.getMedia();
+      const mediaItems = await dbStorage.getMedia();
       res.json({ media: mediaItems });
     } catch (error) {
       console.error("Error in GET /api/media:", error);
@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid media ID" });
       }
 
-      const mediaItem = await storage.getMediaById(id);
+      const mediaItem = await dbStorage.getMediaById(id);
       if (!mediaItem) {
         return res.status(404).json({ error: "Media not found" });
       }
@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create the media record in the database
-      const mediaItem = await storage.createMedia({
+      const mediaItem = await dbStorage.createMedia({
         title,
         description: description || null,
         fileName: file.originalname,
@@ -407,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: result.error.format() });
       }
 
-      const updatedMedia = await storage.updateMedia(id, result.data);
+      const updatedMedia = await dbStorage.updateMedia(id, result.data);
       if (!updatedMedia) {
         return res.status(404).json({ error: "Media not found" });
       }
@@ -427,13 +427,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get the media first to know the file path
-      const mediaItem = await storage.getMediaById(id);
+      const mediaItem = await dbStorage.getMediaById(id);
       if (!mediaItem) {
         return res.status(404).json({ error: "Media not found" });
       }
 
       // Delete from database
-      const success = await storage.deleteMedia(id);
+      const success = await dbStorage.deleteMedia(id);
       if (!success) {
         return res.status(500).json({ error: "Failed to delete media from database" });
       }
@@ -469,7 +469,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid course ID" });
       }
 
-      const mediaItems = await storage.getCourseMedia(courseId);
+      const mediaItems = await dbStorage.getCourseMedia(courseId);
       res.json({ media: mediaItems });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch course media" });
@@ -492,18 +492,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Check if course exists
-      const course = await storage.getCourse(courseId);
+      const course = await dbStorage.getCourse(courseId);
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
 
       // Check if media exists
-      const mediaItem = await storage.getMediaById(mediaId);
+      const mediaItem = await dbStorage.getMediaById(mediaId);
       if (!mediaItem) {
         return res.status(404).json({ error: "Media not found" });
       }
 
-      const relation = await storage.linkMediaToCourse(courseId, mediaId, order);
+      const relation = await dbStorage.linkMediaToCourse(courseId, mediaId, order);
       res.status(201).json({ relation });
     } catch (error) {
       res.status(500).json({ error: "Failed to link media to course" });
@@ -520,7 +520,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid course or media ID" });
       }
 
-      const success = await storage.unlinkMediaFromCourse(courseId, mediaId);
+      const success = await dbStorage.unlinkMediaFromCourse(courseId, mediaId);
       if (!success) {
         return res.status(404).json({ error: "Course-media relationship not found" });
       }
@@ -546,7 +546,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Valid order value is required" });
       }
 
-      const relation = await storage.updateMediaOrder(courseId, mediaId, parseInt(order));
+      const relation = await dbStorage.updateMediaOrder(courseId, mediaId, parseInt(order));
       if (!relation) {
         return res.status(404).json({ error: "Course-media relationship not found" });
       }
