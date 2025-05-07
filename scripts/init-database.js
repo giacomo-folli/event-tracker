@@ -1,7 +1,16 @@
 // Initialize database with tables
-const { Pool } = require('@neondatabase/serverless');
-const fs = require('fs');
-const path = require('path');
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import fs from 'fs';
+import path from 'path';
+import { exec } from 'child_process';
+import { fileURLToPath } from 'url';
+import ws from 'ws';
+
+// Set up WebSocket for Neon
+neonConfig.webSocketConstructor = ws;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function initDatabase() {
   try {
@@ -14,7 +23,7 @@ async function initDatabase() {
     
     // Create database schema by running drizzle-kit push
     console.log('Running database migrations...');
-    const { exec } = require('child_process');
+    
     exec('npx drizzle-kit push:pg', (error, stdout, stderr) => {
       if (error) {
         console.error(`Error running migrations: ${error.message}`);
