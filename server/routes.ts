@@ -1,6 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema } from "@shared/schema";
 import { join } from "path";
 import * as fs from "fs";
@@ -15,7 +15,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
   
   // Configure multer for file uploads
-  const storage = multer.diskStorage({
+  const multerStorage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, uploadDir);
     },
@@ -28,7 +28,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   const upload = multer({ 
-    storage,
+    storage: multerStorage,
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB max file size
     },
@@ -243,9 +243,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // REST endpoints for courses
   app.get("/api/courses", async (req: Request, res: Response) => {
     try {
+      console.log("Getting courses...");
       const courses = await storage.getCourses();
+      console.log("Courses retrieved:", courses);
       res.json({ courses });
     } catch (error) {
+      console.error("Error in GET /api/courses:", error);
       res.status(500).json({ error: "Failed to fetch courses" });
     }
   });
@@ -331,6 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mediaItems = await storage.getMedia();
       res.json({ media: mediaItems });
     } catch (error) {
+      console.error("Error in GET /api/media:", error);
       res.status(500).json({ error: "Failed to fetch media items" });
     }
   });
