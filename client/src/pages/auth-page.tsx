@@ -9,29 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "../hooks/AuthProvider";
-// Use a simpler auth approach for now
-const mockAuth = {
-  user: null,
-  loginMutation: {
-    mutate: (data: any, options: any) => {
-      console.log("Login with", data);
-      if (options && options.onSuccess) {
-        options.onSuccess();
-      }
-    },
-    isPending: false
-  },
-  registerMutation: {
-    mutate: (data: any, options: any) => {
-      console.log("Register with", data);
-      if (options && options.onSuccess) {
-        options.onSuccess();
-      }
-    },
-    isPending: false
-  }
-};
+import { useAuth } from "../hooks";
 import { useToast } from "@/hooks/use-toast";
 
 // Login form schema
@@ -55,9 +33,11 @@ type RegistrationFormValues = z.infer<typeof registrationSchema>;
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>("login");
   const [_, setLocation] = useLocation();
-  // Use mockAuth for testing purposes
-  const { user, loginMutation, registerMutation } = mockAuth;
   const { toast } = useToast();
+  
+  // Use the real auth context
+  const auth = useAuth();
+  const { user, loginMutation, registerMutation } = auth;
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
@@ -95,7 +75,12 @@ export default function AuthPage() {
   const handleLogin = async (data: LoginFormValues) => {
     loginMutation.mutate(data, {
       onSuccess: () => {
-        setLocation("/");
+        // Redirect handled by AuthProvider
+      },
+      onError: (error) => {
+        // Display error toast - already handled by AuthProvider
+        // Reset the password field to allow user to try again
+        loginForm.setValue("password", "");
       }
     });
   };
@@ -104,7 +89,12 @@ export default function AuthPage() {
   const handleRegister = async (data: RegistrationFormValues) => {
     registerMutation.mutate(data, {
       onSuccess: () => {
-        setLocation("/");
+        // Redirect handled by AuthProvider
+      },
+      onError: (error) => {
+        // Error toast already handled by AuthProvider
+        // Reset password only, keep other fields for correction
+        registerForm.setValue("password", "");
       }
     });
   };

@@ -120,10 +120,16 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    // Check if the request contains the required fields
+    if (!req.body || !req.body.username || !req.body.password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+
     passport.authenticate("local", (err, user, info) => {
       if (err) return next(err);
       if (!user) {
-        return res.status(401).json({ error: info?.message || "Authentication failed" });
+        // Provide a clear error message for failed login
+        return res.status(401).json({ error: info?.message || "Invalid username or password" });
       }
       
       req.login(user, (err) => {
@@ -131,6 +137,7 @@ export async function setupAuth(app: Express) {
         
         // Don't send password back to client
         const { password, ...safeUser } = user;
+        console.log("Login successful for user:", safeUser.username);
         res.json({ user: safeUser });
       });
     })(req, res, next);
