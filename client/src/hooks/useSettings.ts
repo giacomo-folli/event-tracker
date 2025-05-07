@@ -26,7 +26,7 @@ export function useSettings() {
   // Update user settings mutation
   const updateSettingsMutation = useMutation({
     mutationFn: (settings: UpdateUserSettings) => 
-      apiRequest("PUT", "/api/user/settings", settings),
+      apiRequest("/api/user/settings", "PUT", settings),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });
     }
@@ -35,7 +35,10 @@ export function useSettings() {
   // Update password mutation
   const updatePasswordMutation = useMutation({
     mutationFn: (passwordData: PasswordUpdateData) => 
-      apiRequest("PUT", "/api/user/password", passwordData)
+      apiRequest("/api/user/password", "PUT", passwordData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    }
   });
   
   return {

@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { userSettingsFormSchema } from "@shared/schema";
 import { z } from "zod";
-import { useState } from "react";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@shared/schema";
+import { useSettings } from "@/hooks/useSettings";
 
 type ProfileFormValues = z.infer<typeof userSettingsFormSchema>;
 
@@ -20,7 +19,7 @@ interface ProfileFormProps {
 
 export function ProfileForm({ user, onSuccess }: ProfileFormProps) {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { updateSettings, isPending } = useSettings();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(userSettingsFormSchema),
@@ -36,9 +35,7 @@ export function ProfileForm({ user, onSuccess }: ProfileFormProps) {
 
   const onSubmit = async (data: ProfileFormValues) => {
     try {
-      setIsSubmitting(true);
-      
-      await apiRequest("PUT", "/api/user/settings", data);
+      await updateSettings(data);
       
       toast({
         title: "Profile updated",
@@ -53,8 +50,6 @@ export function ProfileForm({ user, onSuccess }: ProfileFormProps) {
         description: "Failed to update your profile. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -118,11 +113,11 @@ export function ProfileForm({ user, onSuccess }: ProfileFormProps) {
                 type="button"
                 variant="outline"
                 onClick={() => form.reset()}
-                disabled={isSubmitting}
+                disabled={isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" disabled={isPending}>
                 Save
               </Button>
             </div>
