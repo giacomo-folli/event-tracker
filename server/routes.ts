@@ -240,6 +240,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Authentication endpoints
+  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+    try {
+      // In a real app with sessions, you would destroy the session here
+      // For now, just return success
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to logout" });
+    }
+  });
+  
   // REST endpoints for courses
   app.get("/api/courses", async (req: Request, res: Response) => {
     try {

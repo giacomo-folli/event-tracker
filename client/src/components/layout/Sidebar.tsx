@@ -1,6 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Calendar, Settings, Code, LogOut, GraduationCap, Image } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -9,9 +11,17 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const [location] = useLocation();
+  const { logout, isLoggingOut } = useAuth();
 
   // Close sidebar on navigation on mobile
   const handleNavClick = () => {
+    if (window.innerWidth < 1024) {
+      onClose();
+    }
+  };
+  
+  const handleLogout = () => {
+    logout();
     if (window.innerWidth < 1024) {
       onClose();
     }
@@ -111,13 +121,15 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
 
           <div className="pt-4 mt-4 border-t border-gray-200">
-            <a 
-              href="#" 
-              className="group flex items-center px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50"
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full justify-start px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50"
             >
               <LogOut className="mr-3 h-5 w-5" />
-              Logout
-            </a>
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </Button>
           </div>
         </nav>
       </div>
