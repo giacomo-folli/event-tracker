@@ -5,6 +5,33 @@ import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwor
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create a default admin user for database initialization
+  app.post("/api/init-admin", async (req: Request, res: Response) => {
+    try {
+      // Check if admin already exists
+      const existingUser = await storage.getUserByUsername("admin");
+      if (existingUser) {
+        return res.json({ message: "Admin user already exists", user: existingUser });
+      }
+
+      // Create default admin user
+      const user = await storage.createUser({
+        username: "admin",
+        password: "password",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+        emailNotifications: true,
+        browserNotifications: false,
+        apiChangeNotifications: true,
+      });
+      
+      res.status(201).json({ message: "Admin user created", user });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to create admin user" });
+    }
+  });
+  
   // REST endpoints for events
   app.get("/api/events", async (req: Request, res: Response) => {
     try {
