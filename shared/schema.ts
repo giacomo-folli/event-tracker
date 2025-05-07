@@ -149,6 +149,8 @@ export const updateEventSchema = createInsertSchema(events).pick({
   startDate: true,
   endDate: true,
   isShared: true,
+  shareToken: true,
+  shareUrl: true,
 });
 
 // Extended schemas with validation

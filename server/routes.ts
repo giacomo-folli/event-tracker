@@ -7,6 +7,7 @@ import * as fs from "fs";
 import multer from "multer";
 import { z } from "zod";
 import { setupAuth } from "./auth";
+import { generateShareToken, generateShareUrl } from "./utils";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication
@@ -167,6 +168,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete event" });
+    }
+  });
+  
+  // Endpoint to toggle event sharing
+  app.put("/api/events/:id/share", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      // Get current event
+      const event = await dbStorage.getEvent(id);
+      if (!event) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      // Toggle sharing status
+      const isShared = req.body.isShared === true;
+      
+      let shareToken = event.shareToken;
+      let shareUrl = event.shareUrl;
+      
+      // If we're enabling sharing and there's no token yet, generate one
+      if (isShared && !shareToken) {
+        shareToken = generateShareToken();
+        shareUrl = generateShareUrl(shareToken);
+      }
+      
+      // Update event
+      const updatedEvent = await dbStorage.updateEvent(id, {
+        isShared,
+        shareToken,
+        shareUrl
+      });
+      
+      if (!updatedEvent) {
+        return res.status(404).json({ error: "Failed to update event sharing status" });
+      }
+      
+      res.json({ event: updatedEvent });
+    } catch (error) {
+      console.error("Error toggling event sharing:", error);
+      res.status(500).json({ error: "Failed to update event sharing status" });
+    }
+  });
+  
+  // Public endpoint to get a shared event by token (no authentication required)
+  app.get("/api/events/shared/:token", async (req: Request, res: Response) => {
+    try {
+      const token = req.params.token;
+      if (!token) {
+        return res.status(400).json({ error: "Invalid share token" });
+      }
+      
+      // Find event by token using PostgreSQL query
+      const events = await dbStorage.getEvents();
+      const event = events.find(e => e.shareToken === token);
+      
+      if (!event || !event.isShared) {
+        return res.status(404).json({ error: "Shared event not found" });
+      }
+      
+      res.json({ event });
+    } catch (error) {
+      console.error("Error getting shared event:", error);
+      res.status(500).json({ error: "Failed to get shared event" });
     }
   });
 

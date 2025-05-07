@@ -5,3 +5,4 @@ export { useEvents } from './useEvents';
 export { useParticipants } from './useParticipants';
 export { useCourses } from './useCourses';
 export { useMedia } from './useMedia';
+export { useEventSharing } from './useEventSharing';
