@@ -18,7 +18,7 @@ export function useParticipants(eventId?: number) {
     queryKey: ['/api/events/participants', eventId],
     queryFn: async () => {
       if (!eventId) return { participants: [] };
-      const response = await apiRequest('GET', `/api/events/${eventId}/participants`);
+      const response = await apiRequest("GET", `/api/events/${eventId}/participants`);
       return await response.json();
     },
     enabled: !!eventId, // Only run the query if eventId is provided
@@ -26,7 +26,7 @@ export function useParticipants(eventId?: number) {
 
   const registerParticipantMutation = useMutation({
     mutationFn: async (data: RegisterParticipantData) => {
-      const response = await apiRequest('POST', `/api/events/${data.eventId}/participants`, data);
+      const response = await apiRequest("POST", `/api/events/${data.eventId}/participants`, data);
       return await response.json();
     },
     onSuccess: () => {
@@ -49,7 +49,7 @@ export function useParticipants(eventId?: number) {
 
   const updateAttendanceMutation = useMutation({
     mutationFn: async ({ id, attended }: { id: number; attended: boolean }) => {
-      const response = await apiRequest('PUT', `/api/events/participants/${id}/attendance`, { attended });
+      const response = await apiRequest("PUT", `/api/events/participants/${id}/attendance`, { attended });
       return await response.json();
     },
     onSuccess: () => {
@@ -72,7 +72,7 @@ export function useParticipants(eventId?: number) {
 
   const deleteParticipantMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest('DELETE', `/api/events/participants/${id}`);
+      const response = await apiRequest("DELETE", `/api/events/participants/${id}`);
       return await response.json();
     },
     onSuccess: () => {
