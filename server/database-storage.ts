@@ -1,11 +1,12 @@
 import { db, pool } from "./db";
 import { 
-  users, events, courses, media, courseMedia,
+  users, events, courses, media, courseMedia, eventParticipants,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
   type Media, type InsertMedia, type UpdateMedia,
-  type CourseMedia, type InsertCourseMedia
+  type CourseMedia, type InsertCourseMedia,
+  type EventParticipant, type InsertEventParticipant
 } from "@shared/schema";
 import { eq, and, desc, asc } from "drizzle-orm";
 import { IStorage } from "./storage";
@@ -285,5 +286,53 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return relation || undefined;
+  }
+
+  // Event participants methods
+  async getEventParticipants(eventId: number): Promise<EventParticipant[]> {
+    return await db.select()
+      .from(eventParticipants)
+      .where(eq(eventParticipants.eventId, eventId))
+      .orderBy(desc(eventParticipants.registeredAt));
+  }
+
+  async getEventParticipant(id: number): Promise<EventParticipant | undefined> {
+    const [participant] = await db.select()
+      .from(eventParticipants)
+      .where(eq(eventParticipants.id, id));
+    return participant || undefined;
+  }
+
+  async createEventParticipant(participant: InsertEventParticipant): Promise<EventParticipant> {
+    try {
+      const [newParticipant] = await db
+        .insert(eventParticipants)
+        .values(participant)
+        .returning();
+      return newParticipant;
+    } catch (error: any) {
+      // Handle unique constraint violation (same email for same event)
+      if (error.message?.includes('uniqueEmailPerEvent')) {
+        throw new Error('This email is already registered for this event');
+      }
+      throw error;
+    }
+  }
+
+  async updateEventParticipantAttendance(id: number, attended: boolean): Promise<EventParticipant | undefined> {
+    const [participant] = await db
+      .update(eventParticipants)
+      .set({ attended })
+      .where(eq(eventParticipants.id, id))
+      .returning();
+    return participant || undefined;
+  }
+
+  async deleteEventParticipant(id: number): Promise<boolean> {
+    const result = await db
+      .delete(eventParticipants)
+      .where(eq(eventParticipants.id, id))
+      .returning();
+    return result.length > 0;
   }
 }

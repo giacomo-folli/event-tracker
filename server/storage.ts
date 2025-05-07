@@ -1,10 +1,11 @@
 import { 
-  users, events, courses, media, courseMedia,
+  users, events, courses, media, courseMedia, eventParticipants,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
   type Media, type InsertMedia, type UpdateMedia,
-  type CourseMedia, type InsertCourseMedia
+  type CourseMedia, type InsertCourseMedia,
+  type EventParticipant, type InsertEventParticipant
 } from "@shared/schema";
 import { DatabaseStorage } from "./database-storage";
 import session from "express-session";
@@ -327,6 +328,52 @@ export class MemStorage implements IStorage {
     const updatedRelation = { ...relation, order };
     this.courseMediaRelations.set(key, updatedRelation);
     return updatedRelation;
+  }
+
+  // Event participants methods
+  async getEventParticipants(eventId: number): Promise<EventParticipant[]> {
+    return Array.from(this.eventParticipants.values())
+      .filter(participant => participant.eventId === eventId);
+  }
+
+  async getEventParticipant(id: number): Promise<EventParticipant | undefined> {
+    return this.eventParticipants.get(id);
+  }
+
+  async createEventParticipant(participant: InsertEventParticipant): Promise<EventParticipant> {
+    // Check if email already exists for this event
+    const exists = Array.from(this.eventParticipants.values())
+      .some(p => p.eventId === participant.eventId && p.email === participant.email);
+    
+    if (exists) {
+      throw new Error('This email is already registered for this event');
+    }
+
+    const id = this.eventParticipantCurrentId++;
+    const now = new Date();
+    const eventParticipant: EventParticipant = {
+      ...participant,
+      id,
+      name: participant.name || null,
+      attended: null,
+      registeredAt: now
+    };
+    
+    this.eventParticipants.set(id, eventParticipant);
+    return eventParticipant;
+  }
+
+  async updateEventParticipantAttendance(id: number, attended: boolean): Promise<EventParticipant | undefined> {
+    const participant = this.eventParticipants.get(id);
+    if (!participant) return undefined;
+    
+    const updatedParticipant = { ...participant, attended };
+    this.eventParticipants.set(id, updatedParticipant);
+    return updatedParticipant;
+  }
+
+  async deleteEventParticipant(id: number): Promise<boolean> {
+    return this.eventParticipants.delete(id);
   }
 }
 
