@@ -29,6 +29,7 @@ function App() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Switch>
           <Route path="/" component={Dashboard} />
+          <Route path="/courses" component={Courses} />
           <Route path="/settings" component={Settings} />
           <Route path="/api-docs" component={ApiDocs} />
           <Route component={NotFound} />

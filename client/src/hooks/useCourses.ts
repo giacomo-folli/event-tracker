@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Course, UpdateCourse } from "@shared/schema";
-import { apiRequest, queryClient } from "@lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export function useCourses() {
   // Query to fetch all courses
