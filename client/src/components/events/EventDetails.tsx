@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Event } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,17 +24,25 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
   const { toggleSharingMutation } = useEventSharing();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
+  
+  // Log when component rerenders with new event data
+  useEffect(() => {
+    console.log("EventDetails component received updated event:", event);
+  }, [event]);
 
-  // Function to toggle event sharing
+  // Function to toggle event sharing with optimistic update
   const handleToggleSharing = async () => {
     try {
-      console.log("Toggling event sharing status:", !event.isShared);
+      const newStatus = !event.isShared;
+      console.log("Toggling event sharing status to:", newStatus);
+      
+      // Execute sharing mutation
       await toggleSharingMutation.mutateAsync({
         eventId: event.id,
-        isShared: !event.isShared
+        isShared: newStatus
       });
-      // Note: We don't need to update any local state here as the 
-      // query invalidation in the mutation will refresh the data
+      
+      console.log("Toggle completed, checking for updated data");
     } catch (error) {
       console.error('Error toggling event sharing:', error);
     }

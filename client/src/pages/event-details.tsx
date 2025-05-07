@@ -1,60 +1,72 @@
-import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { Event } from "@shared/schema";
 import { Header } from "@/components/layout/Header";
 import EventDetails from "@/components/events/EventDetails";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export default function EventDetailsPage() {
   const [, params] = useRoute("/admin/events/:id");
   const eventId = params?.id ? parseInt(params.id) : null;
-  const [event, setEvent] = useState<Event | null>(null);
-  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!eventId) return;
-
-    async function fetchEvent() {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/events/${eventId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch event");
-        }
-        const data = await response.json();
-        setEvent(data.event);
-      } catch (error) {
-        console.error("Error fetching event:", error);
-        toast({
-          title: "Error",
-          description: "Could not load event details",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
+  // Use React Query to fetch event data
+  const { 
+    data: eventData, 
+    isLoading, 
+    error 
+  } = useQuery({
+    queryKey: ['/api/events', eventId?.toString()],
+    queryFn: async () => {
+      if (!eventId) return null;
+      const response = await fetch(`/api/events/${eventId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch event");
       }
-    }
+      const data = await response.json();
+      console.log("Fetched event data:", data.event);
+      return data.event;
+    },
+    enabled: !!eventId,
+  });
 
-    fetchEvent();
-  }, [eventId, toast]);
+  // Extract event from query result
+  const event = eventData as Event | null;
 
-  const handleSaveEvent = async (updatedEvent: Event) => {
-    try {
+  // Show error toast if query fails
+  if (error) {
+    console.error("Error fetching event:", error);
+    toast({
+      title: "Error",
+      description: "Could not load event details",
+      variant: "destructive",
+    });
+  }
+
+  // Update event mutation
+  const updateEventMutation = useMutation({
+    mutationFn: async (updatedEvent: Event) => {
+      if (!eventId) throw new Error("No event ID available");
       const response = await apiRequest("PUT", `/api/events/${eventId}`, updatedEvent);
       if (!response.ok) {
         throw new Error("Failed to update event");
       }
-      const data = await response.json();
-      setEvent(data.event);
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/events', eventId?.toString()] });
+      
       toast({
         title: "Success",
         description: "Event updated successfully",
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error updating event:", error);
       toast({
         title: "Error",
@@ -62,6 +74,10 @@ export default function EventDetailsPage() {
         variant: "destructive",
       });
     }
+  });
+
+  const handleSaveEvent = async (updatedEvent: Event) => {
+    updateEventMutation.mutate(updatedEvent);
   };
 
   return (
@@ -72,7 +88,7 @@ export default function EventDetailsPage() {
       />
       
       <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
-        {loading ? (
+        {isLoading ? (
           <div className="space-y-4">
             <Card>
               <CardContent className="p-6">

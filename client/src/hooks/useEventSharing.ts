@@ -38,8 +38,11 @@ export function useEventSharing() {
       
       // Invalidate event queries to refresh the data
       console.log("Invalidating queries for event ID:", variables.eventId);
+      // Invalidate both the list and the individual event
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       queryClient.invalidateQueries({ queryKey: ['/api/events', variables.eventId.toString()] });
+      // Force refetch of data
+      queryClient.refetchQueries({ queryKey: ['/api/events', variables.eventId.toString()] });
     },
     onError: (error: Error) => {
       toast({
