@@ -7,6 +7,7 @@ import {
   type CourseMedia, type InsertCourseMedia
 } from "@shared/schema";
 import { DatabaseStorage } from "./database-storage";
+import session from "express-session";
 
 export interface IStorage {
   // User methods

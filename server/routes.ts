@@ -6,8 +6,12 @@ import { join } from "path";
 import * as fs from "fs";
 import multer from "multer";
 import { z } from "zod";
+import { setupAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication
+  await setupAuth(app);
+  
   // Setup upload directory for media files
   const uploadDir = join(process.cwd(), 'uploads');
   if (!fs.existsSync(uploadDir)) {
@@ -240,16 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Authentication endpoints
-  app.post("/api/auth/logout", async (req: Request, res: Response) => {
-    try {
-      // In a real app with sessions, you would destroy the session here
-      // For now, just return success
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to logout" });
-    }
-  });
+  // Authentication is now handled by auth.ts
   
   // REST endpoints for courses
   app.get("/api/courses", async (req: Request, res: Response) => {
