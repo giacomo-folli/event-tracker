@@ -11,7 +11,7 @@ import AuthPage from "@/pages/auth-page";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useState, useEffect } from "react";
 import { ProtectedRoute } from "@/lib/ProtectedRoute";
-import { AuthProvider } from "./hooks/AuthProvider";
+import { AuthProvider, useAuth } from "./hooks/AuthProvider";
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { Calendar, Settings, Code, LogOut, GraduationCap, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "../../hooks/AuthProvider";
+import { useAuth } from "../../hooks";
 
 interface SidebarProps {
   isOpen: boolean;
