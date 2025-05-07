@@ -29,7 +29,7 @@ export function useMedia() {
   // Upload new media
   const uploadMediaMutation = useMutation({
     mutationFn: (formData: FormData) => 
-      apiRequest('/api/media', 'POST', formData, { headers: {} }), // Let browser set content-type with boundary
+      apiRequest('/api/media', 'POST', formData), // FormData is detected in apiRequest
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/media'] });
     }
