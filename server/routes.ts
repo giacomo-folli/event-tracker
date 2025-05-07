@@ -197,12 +197,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shareUrl = generateShareUrl(shareToken);
       }
       
-      // Update event
-      const updatedEvent = await dbStorage.updateEvent(id, {
+      // Prepare update data using the partial schema
+      const updateData = updateEventSharingSchema.parse({
         isShared,
         shareToken,
         shareUrl
       });
+      
+      // Update event
+      const updatedEvent = await dbStorage.updateEvent(id, updateData);
       
       if (!updatedEvent) {
         return res.status(404).json({ error: "Failed to update event sharing status" });
