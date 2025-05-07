@@ -15,7 +15,6 @@ export function generateShareToken(): string {
  * @returns The full share URL
  */
 export function generateShareUrl(token: string): string {
-  // In production, this would use the actual hostname
-  const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
-  return `${baseUrl}/events/shared/${token}`;
+  // Using client-side path format for easier integration with frontend routing
+  return `/events/shared/${token}`;
 }
