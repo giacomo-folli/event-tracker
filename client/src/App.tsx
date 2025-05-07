@@ -6,6 +6,7 @@ import Courses from "@/pages/courses";
 import Media from "@/pages/media";
 import EventView from "@/pages/event-view";
 import EventDetailsPage from "@/pages/event-details";
+import SharedEventPage from "@/pages/shared-event";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -91,10 +92,13 @@ function AppRoutes() {
 
   return (
     <Switch>
-      {/* Always allow access to auth page */}
+      {/* Public routes that don't require authentication */}
       <Route path="/auth">
         {user ? <Redirect to="/" /> : <AuthPage />}
       </Route>
+      
+      {/* Shared event public route */}
+      <Route path="/events/shared/:token" component={SharedEventPage} />
       
       {/* All other routes require authentication */}
       <Route>
