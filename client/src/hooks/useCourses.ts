@@ -4,15 +4,23 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 
 export function useCourses() {
   // Query to fetch all courses
-  const coursesQuery = useQuery({
+  const coursesQuery = useQuery<{ courses: Course[] }>({
     queryKey: ['/api/courses'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/courses');
+      return response;
+    },
     refetchOnWindowFocus: false,
   });
 
   // Query to fetch a specific course
   const getCourse = (id: number) => {
-    return useQuery({
+    return useQuery<{ course: Course }>({
       queryKey: ['/api/courses', id],
+      queryFn: async () => {
+        const response = await apiRequest(`/api/courses/${id}`);
+        return response;
+      },
       enabled: !!id,
       refetchOnWindowFocus: false,
     });
@@ -21,7 +29,7 @@ export function useCourses() {
   // Mutation to create a new course
   const createCourseMutation = useMutation({
     mutationFn: (course: Omit<Course, "id">) => 
-      apiRequest("POST", "/api/courses", course),
+      apiRequest("/api/courses", "POST", course),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
     }
@@ -30,7 +38,7 @@ export function useCourses() {
   // Mutation to update an existing course
   const updateCourseMutation = useMutation({
     mutationFn: ({ id, ...course }: Course) => 
-      apiRequest("PUT", `/api/courses/${id}`, course),
+      apiRequest(`/api/courses/${id}`, "PUT", course),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
       queryClient.invalidateQueries({ queryKey: ['/api/courses', variables.id] });
@@ -40,7 +48,7 @@ export function useCourses() {
   // Mutation to delete a course
   const deleteCourseMutation = useMutation({
     mutationFn: (id: number) => 
-      apiRequest("DELETE", `/api/courses/${id}`),
+      apiRequest(`/api/courses/${id}`, "DELETE"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/courses'] });
     }

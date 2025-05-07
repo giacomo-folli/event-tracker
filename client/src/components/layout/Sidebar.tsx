@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Calendar, Settings, Code, LogOut, GraduationCap } from "lucide-react";
+import { Calendar, Settings, Code, LogOut, GraduationCap, Image } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -62,6 +62,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <GraduationCap className="mr-3 h-5 w-5" />
               Course Management
+            </a>
+          </Link>
+          
+          <Link href="/media">
+            <a 
+              onClick={handleNavClick}
+              className={cn(
+                "group flex items-center px-3 py-2 text-sm font-medium rounded-md",
+                location === "/media" 
+                  ? "bg-primary-50 text-primary"
+                  : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              <Image className="mr-3 h-5 w-5" />
+              Media Library
             </a>
           </Link>
 

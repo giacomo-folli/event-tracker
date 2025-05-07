@@ -8,6 +8,10 @@ export function useMedia() {
   // Get all media
   const mediaQuery = useQuery<{ media: Media[] }>({
     queryKey: ['/api/media'],
+    queryFn: async () => {
+      const response = await apiRequest('/api/media');
+      return response;
+    },
     staleTime: 1000 * 60, // 1 minute
   });
 
@@ -15,7 +19,10 @@ export function useMedia() {
   const getCourseMedia = (courseId: number) => 
     useQuery<{ media: (Media & { order: number })[] }>({
       queryKey: ['/api/courses', courseId, 'media'],
-      queryFn: () => apiRequest(`/api/courses/${courseId}/media`),
+      queryFn: async () => {
+        const response = await apiRequest(`/api/courses/${courseId}/media`);
+        return response;
+      },
       staleTime: 1000 * 60, // 1 minute
     });
 
