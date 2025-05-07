@@ -23,6 +23,7 @@ export interface IStorage {
   // Event methods
   getEvents(): Promise<Event[]>;
   getEvent(id: number): Promise<Event | undefined>;
+  getEventByToken(token: string): Promise<Event | undefined>;
   createEvent(event: InsertEvent): Promise<Event>;
   updateEvent(id: number, event: UpdateEvent): Promise<Event | undefined>;
   deleteEvent(id: number): Promise<boolean>;
@@ -206,6 +207,12 @@ export class MemStorage implements IStorage {
   
   async getEvent(id: number): Promise<Event | undefined> {
     return this.events.get(id);
+  }
+  
+  async getEventByToken(token: string): Promise<Event | undefined> {
+    return Array.from(this.events.values()).find(
+      (event) => event.shareToken === token && event.isShared === true
+    );
   }
   
   async createEvent(insertEvent: InsertEvent): Promise<Event> {

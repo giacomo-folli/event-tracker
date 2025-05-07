@@ -85,6 +85,22 @@ export class DatabaseStorage implements IStorage {
     return event || undefined;
   }
   
+  async getEventByToken(token: string): Promise<Event | undefined> {
+    const [event] = await db.select({
+      id: events.id,
+      title: events.title,
+      description: events.description,
+      location: events.location,
+      startDate: events.startDate,
+      endDate: events.endDate,
+      creatorId: events.creatorId,
+      isShared: events.isShared,
+      shareToken: events.shareToken,
+      shareUrl: events.shareUrl
+    }).from(events).where(eq(events.shareToken, token));
+    return event || undefined;
+  }
+  
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const [event] = await db
       .insert(events)

@@ -230,9 +230,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid share token" });
       }
       
-      // Find event by token using PostgreSQL query
-      const events = await dbStorage.getEvents();
-      const event = events.find(e => e.shareToken === token);
+      // Find event by token using our optimized method
+      const event = await dbStorage.getEventByToken(token);
       
       if (!event || !event.isShared) {
         return res.status(404).json({ error: "Shared event not found" });
