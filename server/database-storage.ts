@@ -41,11 +41,27 @@ export class DatabaseStorage implements IStorage {
   
   // Event methods
   async getEvents(): Promise<Event[]> {
-    return db.select().from(events);
+    return await db.select({
+      id: events.id,
+      title: events.title,
+      description: events.description,
+      location: events.location,
+      startDate: events.startDate,
+      endDate: events.endDate,
+      creatorId: events.creatorId
+    }).from(events);
   }
   
   async getEvent(id: number): Promise<Event | undefined> {
-    const [event] = await db.select().from(events).where(eq(events.id, id));
+    const [event] = await db.select({
+      id: events.id,
+      title: events.title,
+      description: events.description,
+      location: events.location,
+      startDate: events.startDate,
+      endDate: events.endDate,
+      creatorId: events.creatorId
+    }).from(events).where(eq(events.id, id));
     return event || undefined;
   }
   
@@ -73,11 +89,29 @@ export class DatabaseStorage implements IStorage {
   
   // Course methods
   async getCourses(): Promise<Course[]> {
-    return db.select().from(courses);
+    return await db.select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      startDate: courses.startDate,
+      creatorId: courses.creatorId,
+      instructor: courses.instructor,
+      level: courses.level,
+      duration: courses.duration
+    }).from(courses);
   }
   
   async getCourse(id: number): Promise<Course | undefined> {
-    const [course] = await db.select().from(courses).where(eq(courses.id, id));
+    const [course] = await db.select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      startDate: courses.startDate,
+      creatorId: courses.creatorId,
+      instructor: courses.instructor,
+      level: courses.level,
+      duration: courses.duration
+    }).from(courses).where(eq(courses.id, id));
     return course || undefined;
   }
   

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { Media } from "@shared/schema";
 
 export function useMedia() {
