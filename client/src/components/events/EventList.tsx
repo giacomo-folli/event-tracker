@@ -21,8 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Calendar, Clock, MapPin, Trash, Pencil } from "lucide-react";
+import { Calendar, Clock, MapPin, Trash, Pencil, Share2 } from "lucide-react";
 import { EventForm } from "./EventForm";
+import { EventShareDialog } from "./EventShareDialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -36,6 +37,7 @@ export function EventList({ events, onEventChange }: EventListProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | undefined>(undefined);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<number | null>(null);
+  const [shareEvent, setShareEvent] = useState<Event | null>(null);
 
   const handleEditClick = (event: Event) => {
     setSelectedEvent(event);

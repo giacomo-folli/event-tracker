@@ -4,6 +4,7 @@ import Settings from "@/pages/settings";
 import ApiDocs from "@/pages/api-docs";
 import Courses from "@/pages/courses";
 import Media from "@/pages/media";
+import EventView from "@/pages/event-view";
 import NotFound from "@/pages/not-found";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useState } from "react";
@@ -34,6 +35,7 @@ function App() {
           <Route path="/media" component={Media} />
           <Route path="/settings" component={Settings} />
           <Route path="/api-docs" component={ApiDocs} />
+          <Route path="/events/:id" component={EventView} />
           <Route component={NotFound} />
         </Switch>
       </div>
