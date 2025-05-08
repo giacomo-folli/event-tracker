@@ -79,6 +79,28 @@ export const eventParticipants = pgTable("event_participants", {
   };
 });
 
+// Training sessions table
+export const trainingSessions = pgTable("training_sessions", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
+  date: timestamp("date").notNull(),
+  hour: integer("hour").notNull(), // 0-23 hour of day
+  creatorId: integer("creator_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Training sessions relations
+export const trainingSessionsRelations = relations(trainingSessions, ({ one }) => ({
+  course: one(courses, {
+    fields: [trainingSessions.courseId],
+    references: [courses.id],
+  }),
+  creator: one(users, {
+    fields: [trainingSessions.creatorId],
+    references: [users.id],
+  }),
+}));
+
 // Relations
 export const eventsRelations = relations(events, ({ many }) => ({
   participants: many(eventParticipants),
@@ -93,6 +115,7 @@ export const eventParticipantsRelations = relations(eventParticipants, ({ one })
 
 export const coursesRelations = relations(courses, ({ many }) => ({
   courseMedia: many(courseMedia),
+  trainingSessions: many(trainingSessions),
 }));
 
 export const mediaRelations = relations(media, ({ many }) => ({
@@ -282,3 +305,25 @@ export type CourseMedia = typeof courseMedia.$inferSelect;
 
 export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;
 export type EventParticipant = typeof eventParticipants.$inferSelect;
+
+// Training sessions schemas
+export const insertTrainingSessionSchema = createInsertSchema(trainingSessions)
+  .pick({
+    courseId: true,
+    hour: true,
+    creatorId: true,
+  })
+  .extend({
+    date: z.coerce.date(),
+  });
+
+export const trainingSessionFormSchema = insertTrainingSessionSchema.extend({
+  courseId: z.coerce.number().min(1, "Please select a course"),
+  date: z.coerce.date().refine(date => date instanceof Date, {
+    message: "Date is required"
+  }),
+  hour: z.coerce.number().min(0).max(23),
+});
+
+export type InsertTrainingSession = z.infer<typeof insertTrainingSessionSchema>;
+export type TrainingSession = typeof trainingSessions.$inferSelect;
