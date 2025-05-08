@@ -41,6 +41,20 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
+  
+  // For DELETE operations, it's okay to have an empty response
+  if (method.toUpperCase() === "DELETE") {
+    const contentLength = res.headers.get("content-length");
+    if (contentLength === "0" || !contentLength) {
+      // Create a new Response with success: true as the body
+      return new Response(JSON.stringify({ success: true }), {
+        status: res.status,
+        statusText: res.statusText,
+        headers: new Headers({ "Content-Type": "application/json" })
+      });
+    }
+  }
+  
   return res;
 }
 

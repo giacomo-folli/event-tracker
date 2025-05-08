@@ -817,7 +817,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DELETE endpoint for training sessions removed per request
+  // DELETE endpoint for training sessions
+  app.delete("/api/training-sessions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid training session ID" });
+      }
+      
+      const success = await dbStorage.deleteTrainingSession(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Training session not found" });
+      }
+      
+      // Notify connected clients about the deleted training session
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'training_session_deleted',
+            id
+          }));
+        }
+      });
+      
+      res.status(200).json({ success });
+    } catch (error) {
+      console.error("Error deleting training session:", error);
+      res.status(500).json({ error: "Failed to delete training session" });
+    }
+  });
 
   // API Keys endpoints
   app.use("/api/keys", apiKeysRouter);

@@ -98,6 +98,7 @@ export default function CalendarPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/training-sessions/month'] });
+      refetchSessions();
       toast({
         title: "Success",
         description: "Training session created successfully"
@@ -122,6 +123,7 @@ export default function CalendarPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/training-sessions/month'] });
+      refetchSessions();
       toast({
         title: "Success",
         description: "Training session deleted successfully"
@@ -176,6 +178,7 @@ export default function CalendarPage() {
     ))
     .then(() => {
       queryClient.invalidateQueries({ queryKey: ['/api/training-sessions/month'] });
+      refetchSessions();
       toast({
         title: "Success",
         description: `Created ${sessions.length} training sessions successfully`
