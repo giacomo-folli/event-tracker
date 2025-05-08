@@ -1,11 +1,12 @@
 import { 
-  users, events, courses, media, courseMedia, eventParticipants,
+  users, events, courses, media, courseMedia, eventParticipants, trainingSessions,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
   type Media, type InsertMedia, type UpdateMedia,
   type CourseMedia, type InsertCourseMedia,
-  type EventParticipant, type InsertEventParticipant
+  type EventParticipant, type InsertEventParticipant,
+  type TrainingSession, type InsertTrainingSession
 } from "@shared/schema";
 import { DatabaseStorage } from "./database-storage";
 import session from "express-session";
@@ -388,6 +389,51 @@ export class MemStorage implements IStorage {
 
   async deleteEventParticipant(id: number): Promise<boolean> {
     return this.eventParticipants.delete(id);
+  }
+  
+  // Training sessions methods
+  private trainingSessions: Map<number, TrainingSession> = new Map();
+  private trainingSessionCurrentId: number = 1;
+  
+  async getTrainingSessions(): Promise<TrainingSession[]> {
+    return Array.from(this.trainingSessions.values());
+  }
+  
+  async getTrainingSessionsByMonth(year: number, month: number): Promise<TrainingSession[]> {
+    // Create start and end date for the month
+    const startDate = new Date(year, month - 1, 1); // month is 1-12, Date expects 0-11
+    const endDate = new Date(year, month, 0); // Last day of the month
+    
+    return Array.from(this.trainingSessions.values())
+      .filter(session => {
+        const sessionDate = new Date(session.date);
+        return sessionDate >= startDate && sessionDate <= endDate;
+      })
+      .sort((a, b) => {
+        // Sort by date, then by hour
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+        if (dateA.getTime() === dateB.getTime()) {
+          return a.hour - b.hour;
+        }
+        return dateA.getTime() - dateB.getTime();
+      });
+  }
+  
+  async getTrainingSession(id: number): Promise<TrainingSession | undefined> {
+    return this.trainingSessions.get(id);
+  }
+  
+  async createTrainingSession(session: InsertTrainingSession): Promise<TrainingSession> {
+    const id = this.trainingSessionCurrentId++;
+    const createdAt = new Date();
+    const trainingSession: TrainingSession = { ...session, id, createdAt };
+    this.trainingSessions.set(id, trainingSession);
+    return trainingSession;
+  }
+  
+  async deleteTrainingSession(id: number): Promise<boolean> {
+    return this.trainingSessions.delete(id);
   }
 }
 
