@@ -48,7 +48,7 @@ import {
 } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { ClipboardCopy, Key, Trash2, AlertTriangle } from "lucide-react";
+import { ClipboardCopy, Key, Trash2, AlertTriangle, ShieldCheck } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -166,11 +166,22 @@ export function ApiKeysForm() {
               <div className="space-y-4">
                 <div className="grid gap-2">
                   <Label htmlFor="name">Name</Label>
-                  <Input 
-                    id="name" 
-                    value={form.getValues().name || ""}
-                    onChange={(e) => form.setValue("name", e.target.value)}
-                    placeholder="My API Key" 
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            id="name" 
+                            placeholder="My API Key"
+                            className="text-foreground" 
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                   <p className="text-sm text-muted-foreground">
                     A descriptive name to identify this API key.
@@ -179,23 +190,34 @@ export function ApiKeysForm() {
 
                 <div className="grid gap-2">
                   <Label htmlFor="expiry">Expiry</Label>
-                  <Select
-                    onValueChange={(value) => {
-                      form.setValue("expiryDays", value === "never" ? null : parseInt(value))
-                    }}
-                    defaultValue={"30"}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select expiry" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="365">1 year</SelectItem>
-                      <SelectItem value="never">Never expires</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormField
+                    control={form.control}
+                    name="expiryDays"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Select
+                            onValueChange={(value) => {
+                              form.setValue("expiryDays", value === "never" ? null : parseInt(value))
+                            }}
+                            defaultValue={field.value?.toString() || "30"}
+                          >
+                            <SelectTrigger className="text-foreground">
+                              <SelectValue placeholder="Select expiry" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="7">7 days</SelectItem>
+                              <SelectItem value="30">30 days</SelectItem>
+                              <SelectItem value="90">90 days</SelectItem>
+                              <SelectItem value="365">1 year</SelectItem>
+                              <SelectItem value="never">Never expires</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <p className="text-sm text-muted-foreground">
                     When this API key should expire. Select "Never expires" for a permanent key.
                   </p>
@@ -264,39 +286,49 @@ export function ApiKeysForm() {
               </div>
             </Form>
             {createdApiKeyState && (
-              <Alert className="mt-4">
-                <Key className="h-4 w-4" />
-                <AlertTitle>New API Key Created</AlertTitle>
-                <AlertDescription>
-                  <div className="mt-2 mb-4">
-                    <span className="text-xs text-gray-500">
-                      This key will only be displayed once. Save it somewhere secure.
+              <div className="mt-6 pt-6 border-t">
+                <div className="flex items-center space-x-2 mb-3">
+                  <ShieldCheck className="h-5 w-5 text-green-500" />
+                  <h3 className="font-medium text-lg">API Key Created Successfully</h3>
+                </div>
+                <div className="bg-muted/50 p-4 rounded-md mb-4">
+                  <div className="mb-2">
+                    <span className="text-sm font-medium text-amber-600 block mb-1">
+                      Important: This key will only be displayed once
                     </span>
-                    <div className="mt-1 flex items-center space-x-2">
-                      <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm overflow-x-auto max-w-full">
-                        {createdApiKeyState.key}
-                      </code>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleCopyApiKey(createdApiKeyState.key)}
-                      >
-                        <ClipboardCopy className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      Store this API key in a secure location. For security reasons, you won't be able to view it again.
+                    </span>
                   </div>
+                  <div className="bg-background border rounded-md p-3 mt-3 flex items-center justify-between">
+                    <code className="font-mono text-xs overflow-x-auto max-w-[290px] whitespace-nowrap block text-foreground">
+                      {createdApiKeyState.key}
+                    </code>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleCopyApiKey(createdApiKeyState.key)}
+                      className="ml-2 flex-shrink-0"
+                    >
+                      <ClipboardCopy className="h-4 w-4 mr-1" />
+                      <span className="text-xs">Copy</span>
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex justify-end">
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant="default"
                     onClick={() => {
                       setShowNewKeyDialog(false);
                       setCreatedApiKey(null);
+                      resetForm();
                     }}
+                    className="w-full sm:w-auto"
                   >
-                    Close
+                    Done
                   </Button>
-                </AlertDescription>
-              </Alert>
+                </div>
+              </div>
             )}
           </DialogContent>
         </Dialog>
