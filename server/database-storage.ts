@@ -14,6 +14,7 @@ import { eq, and, desc, asc, gte, lte } from "drizzle-orm";
 import { IStorage } from "./storage";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
+import * as crypto from "crypto";
 
 export class DatabaseStorage implements IStorage {
   public sessionStore: session.Store;
@@ -441,7 +442,8 @@ export class DatabaseStorage implements IStorage {
   
   async createApiKey(userId: number, name: string, expiryDays?: number): Promise<ApiKey> {
     // Generate a random API key (32 bytes hex string)
-    const key = require('crypto').randomBytes(32).toString('hex');
+    const randomKey = crypto.randomBytes(32).toString('hex');
+    const key = 'ak_' + randomKey;
     
     // Set expiry date if provided
     let expiresAt = null;
