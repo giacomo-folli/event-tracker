@@ -89,6 +89,18 @@ export const trainingSessions = pgTable("training_sessions", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// API keys table for external service authentication
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(), // Descriptive name for the API key
+  key: text("key").notNull().unique(), // The actual API key
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at"),
+  expiresAt: timestamp("expires_at"), // Optional expiration date
+});
+
 // Training sessions relations
 export const trainingSessionsRelations = relations(trainingSessions, ({ one }) => ({
   course: one(courses, {
@@ -110,6 +122,17 @@ export const eventParticipantsRelations = relations(eventParticipants, ({ one })
   event: one(events, {
     fields: [eventParticipants.eventId],
     references: [events.id],
+  }),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  apiKeys: many(apiKeys)
+}));
+
+export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
+  user: one(users, {
+    fields: [apiKeys.userId],
+    references: [users.id],
   }),
 }));
 
@@ -327,3 +350,18 @@ export const trainingSessionFormSchema = insertTrainingSessionSchema.extend({
 
 export type InsertTrainingSession = z.infer<typeof insertTrainingSessionSchema>;
 export type TrainingSession = typeof trainingSessions.$inferSelect;
+
+// API Key schemas
+export const insertApiKeySchema = createInsertSchema(apiKeys)
+  .pick({
+    name: true,
+    userId: true,
+  });
+
+export const apiKeyFormSchema = insertApiKeySchema.extend({
+  name: z.string().min(1, "Name is required"),
+  expiryDays: z.number().min(1).max(365).optional(),
+});
+
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+export type ApiKey = typeof apiKeys.$inferSelect;

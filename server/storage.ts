@@ -1,12 +1,13 @@
 import { 
-  users, events, courses, media, courseMedia, eventParticipants, trainingSessions,
+  users, events, courses, media, courseMedia, eventParticipants, trainingSessions, apiKeys,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
   type Media, type InsertMedia, type UpdateMedia,
   type CourseMedia, type InsertCourseMedia,
   type EventParticipant, type InsertEventParticipant,
-  type TrainingSession, type InsertTrainingSession
+  type TrainingSession, type InsertTrainingSession,
+  type ApiKey, type InsertApiKey
 } from "@shared/schema";
 import { DatabaseStorage } from "./database-storage";
 import session from "express-session";
@@ -62,6 +63,15 @@ export interface IStorage {
   getTrainingSession(id: number): Promise<TrainingSession | undefined>;
   createTrainingSession(session: InsertTrainingSession): Promise<TrainingSession>;
   deleteTrainingSession(id: number): Promise<boolean>;
+  
+  // API keys methods
+  getUserApiKeys(userId: number): Promise<ApiKey[]>;
+  getApiKey(id: number): Promise<ApiKey | undefined>;
+  getApiKeyByKey(key: string): Promise<ApiKey | undefined>;
+  createApiKey(userId: number, name: string, expiryDays?: number): Promise<ApiKey>;
+  updateApiKeyLastUsed(id: number): Promise<ApiKey | undefined>;
+  toggleApiKeyStatus(id: number, isActive: boolean): Promise<ApiKey | undefined>;
+  deleteApiKey(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -434,6 +444,75 @@ export class MemStorage implements IStorage {
   
   async deleteTrainingSession(id: number): Promise<boolean> {
     return this.trainingSessions.delete(id);
+  }
+  
+  // API keys methods
+  private apiKeys: Map<number, ApiKey> = new Map();
+  private apiKeyCurrentId: number = 1;
+  
+  async getUserApiKeys(userId: number): Promise<ApiKey[]> {
+    return Array.from(this.apiKeys.values())
+      .filter(key => key.userId === userId);
+  }
+  
+  async getApiKey(id: number): Promise<ApiKey | undefined> {
+    return this.apiKeys.get(id);
+  }
+  
+  async getApiKeyByKey(key: string): Promise<ApiKey | undefined> {
+    return Array.from(this.apiKeys.values())
+      .find(apiKey => apiKey.key === key && apiKey.isActive);
+  }
+  
+  async createApiKey(userId: number, name: string, expiryDays?: number): Promise<ApiKey> {
+    const id = this.apiKeyCurrentId++;
+    const createdAt = new Date();
+    
+    // Generate a random API key (32 bytes hex string)
+    const key = require('crypto').randomBytes(32).toString('hex');
+    
+    // Set expiry date if provided
+    let expiresAt = null;
+    if (expiryDays) {
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + expiryDays);
+    }
+    
+    const apiKey: ApiKey = {
+      id,
+      name,
+      key,
+      userId,
+      isActive: true,
+      createdAt,
+      lastUsedAt: null,
+      expiresAt
+    };
+    
+    this.apiKeys.set(id, apiKey);
+    return apiKey;
+  }
+  
+  async updateApiKeyLastUsed(id: number): Promise<ApiKey | undefined> {
+    const apiKey = this.apiKeys.get(id);
+    if (!apiKey) return undefined;
+    
+    const updatedApiKey = { ...apiKey, lastUsedAt: new Date() };
+    this.apiKeys.set(id, updatedApiKey);
+    return updatedApiKey;
+  }
+  
+  async toggleApiKeyStatus(id: number, isActive: boolean): Promise<ApiKey | undefined> {
+    const apiKey = this.apiKeys.get(id);
+    if (!apiKey) return undefined;
+    
+    const updatedApiKey = { ...apiKey, isActive };
+    this.apiKeys.set(id, updatedApiKey);
+    return updatedApiKey;
+  }
+  
+  async deleteApiKey(id: number): Promise<boolean> {
+    return this.apiKeys.delete(id);
   }
 }
 
