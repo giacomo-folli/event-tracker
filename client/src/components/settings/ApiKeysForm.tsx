@@ -84,10 +84,15 @@ export function ApiKeysForm() {
   };
 
   function onSubmit(values: z.infer<typeof apiKeyFormSchema>) {
+    console.log("Submitting form with values:", values);
     createApiKey(values, {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.log("API Key created successfully:", data);
         // Leave dialog open to show the created key
         // Form will be reset on close
+      },
+      onError: (error) => {
+        console.error("Error creating API key:", error);
       }
     });
   }
