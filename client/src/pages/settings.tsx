@@ -3,6 +3,7 @@ import { Header } from "@/components/layout/Header";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { AccountForm } from "@/components/settings/AccountForm";
 import { NotificationForm } from "@/components/settings/NotificationForm";
+import { ApiKeysForm } from "@/components/settings/ApiKeysForm";
 import { useSettings } from "@/hooks/useSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
@@ -43,6 +44,7 @@ export default function Settings() {
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="account">Account</TabsTrigger>
               <TabsTrigger value="notifications">Notifications</TabsTrigger>
+              <TabsTrigger value="api-keys">API Keys</TabsTrigger>
             </TabsList>
             
             <TabsContent value="profile">
@@ -60,6 +62,12 @@ export default function Settings() {
             <TabsContent value="notifications">
               <div className="py-6">
                 <NotificationForm user={user} onSuccess={refetch} />
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="api-keys">
+              <div className="py-6">
+                <ApiKeysForm />
               </div>
             </TabsContent>
           </Tabs>

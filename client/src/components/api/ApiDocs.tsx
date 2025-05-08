@@ -15,6 +15,7 @@ export function ApiDocs() {
             <TabsTrigger value="courses">Courses</TabsTrigger>
             <TabsTrigger value="media">Media</TabsTrigger>
             <TabsTrigger value="user">User</TabsTrigger>
+            <TabsTrigger value="authentication">Authentication</TabsTrigger>
           </TabsList>
           
           {/* EVENTS ENDPOINTS */}
@@ -428,6 +429,132 @@ export function ApiDocs() {
               </div>
               <p className="mt-2 text-sm text-gray-600">Creates an admin user if none exists.</p>
               <p className="mt-1 text-xs text-gray-500 italic">Note: This endpoint is primarily used for system initialization.</p>
+            </div>
+          </TabsContent>
+          
+          {/* AUTHENTICATION ENDPOINTS */}
+          <TabsContent value="authentication">
+            <h3>Authentication</h3>
+            <p className="mb-4">The API supports two authentication methods:</p>
+            
+            <h4 className="text-md font-semibold">1. Session-based Authentication</h4>
+            <p className="mb-4">This is used when accessing the API through the web interface. Use the login endpoint to authenticate and receive a session cookie.</p>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Log In</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">POST</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/login</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Authenticates a user and creates a session.</p>
+              
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-gray-700">Request Body:</h5>
+                <pre className="mt-2 bg-gray-800 text-green-300 p-4 rounded-md overflow-x-auto text-xs">
+{`{
+  "username": "your-username",
+  "password": "your-password"
+}`}
+                </pre>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Log Out</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">POST</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/logout</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Ends the current session.</p>
+            </div>
+            
+            <h4 className="text-md font-semibold mt-8">2. API Key Authentication</h4>
+            <p className="mb-4">For programmatic access to the API, use API keys. These keys can be created and managed in the user settings panel.</p>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">API Key Usage</h4>
+              <p className="mt-2 text-sm text-gray-600">To use an API key, include it in the <code>X-API-Key</code> header with all requests:</p>
+              
+              <pre className="mt-4 bg-gray-800 text-green-300 p-4 rounded-md overflow-x-auto text-xs">
+{`// Example HTTP request with API key
+GET /api/events HTTP/1.1
+Host: example.com
+X-API-Key: your-api-key-here`}
+              </pre>
+            </div>
+            
+            <h4 className="text-md font-semibold mt-6">API Key Management Endpoints</h4>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Get API Keys</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">GET</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/keys</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Returns a list of all API keys for the authenticated user.</p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Create API Key</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">POST</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/keys</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Creates a new API key.</p>
+              
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-gray-700">Request Body:</h5>
+                <pre className="mt-2 bg-gray-800 text-green-300 p-4 rounded-md overflow-x-auto text-xs">
+{`{
+  "name": "My API Key",
+  "expiryDays": 30 // Optional - number of days until key expires
+}`}
+                </pre>
+              </div>
+              
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-gray-700">Response:</h5>
+                <pre className="mt-2 bg-gray-800 text-green-300 p-4 rounded-md overflow-x-auto text-xs">
+{`{
+  "apiKey": {
+    "id": 1,
+    "name": "My API Key",
+    "key": "ak_1234567890abcdef1234567890abcdef",
+    "createdAt": "2025-05-01T12:00:00Z",
+    "isActive": true,
+    "expiresAt": "2025-06-01T12:00:00Z"
+  },
+  "message": "API key created successfully. Save this key as it will not be shown again."
+}`}
+                </pre>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Toggle API Key Status</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">PUT</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/keys/{"{id}"}/toggle</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Activates or deactivates an API key.</p>
+              
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-gray-700">Request Body:</h5>
+                <pre className="mt-2 bg-gray-800 text-green-300 p-4 rounded-md overflow-x-auto text-xs">
+{`{
+  "isActive": true // or false to deactivate
+}`}
+                </pre>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Delete API Key</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">DELETE</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/keys/{"{id}"}</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Permanently deletes an API key.</p>
             </div>
           </TabsContent>
         </Tabs>
