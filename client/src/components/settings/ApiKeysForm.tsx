@@ -51,12 +51,16 @@ import { Switch } from "@/components/ui/switch";
 import { ClipboardCopy, Key, Trash2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ApiKeysForm() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [showNewKeyDialog, setShowNewKeyDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedKeyId, setSelectedKeyId] = useState<number | null>(null);
+  const [createdApiKeyState, setCreatedApiKey] = useState<any>(null);
 
   const {
     apiKeys,
@@ -159,61 +163,86 @@ export function ApiKeysForm() {
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="My API Key" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        A descriptive name to identify this API key.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="expiryDays"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Expiry</FormLabel>
-                      <Select
-                        onValueChange={(value) => field.onChange(value === "never" ? null : parseInt(value))}
-                        defaultValue={field.value?.toString() || "30"}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select expiry" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="7">7 days</SelectItem>
-                          <SelectItem value="30">30 days</SelectItem>
-                          <SelectItem value="90">90 days</SelectItem>
-                          <SelectItem value="365">1 year</SelectItem>
-                          <SelectItem value="never">Never expires</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        When this API key should expire. Select "Never expires" for a permanent key.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className="space-y-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input 
+                    id="name" 
+                    value={form.getValues().name || ""}
+                    onChange={(e) => form.setValue("name", e.target.value)}
+                    placeholder="My API Key" 
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    A descriptive name to identify this API key.
+                  </p>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="expiry">Expiry</Label>
+                  <Select
+                    onValueChange={(value) => {
+                      form.setValue("expiryDays", value === "never" ? null : parseInt(value))
+                    }}
+                    defaultValue={"30"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select expiry" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="365">1 year</SelectItem>
+                      <SelectItem value="never">Never expires</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground">
+                    When this API key should expire. Select "Never expires" for a permanent key.
+                  </p>
+                </div>
+
                 <DialogFooter>
-                  <Button type="submit" disabled={isCreating}>
+                  <Button 
+                    onClick={() => {
+                      try {
+                        const values = form.getValues();
+                        console.log("Creating API key with values:", values);
+                        
+                        // Directly fetch to debug
+                        fetch('/api/keys', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(values),
+                          credentials: 'include'
+                        })
+                        .then(response => {
+                          console.log("API response status:", response.status);
+                          return response.json();
+                        })
+                        .then(data => {
+                          console.log("API response data:", data);
+                          if (data.apiKey) {
+                            queryClient.invalidateQueries({ queryKey: ['/api/keys'] });
+                            // Set the created API key to show in the UI
+                            setCreatedApiKey(data.apiKey);
+                          }
+                        })
+                        .catch(err => {
+                          console.error("Error in fetch:", err);
+                        });
+                      } catch (err) {
+                        console.error("Error in button click handler:", err);
+                      }
+                    }}
+                    disabled={isCreating}
+                    type="button"
+                  >
                     {isCreating ? "Creating..." : "Create API Key"}
                   </Button>
                 </DialogFooter>
-              </form>
+              </div>
             </Form>
-            {createdApiKey && (
+            {createdApiKeyState && (
               <Alert className="mt-4">
                 <Key className="h-4 w-4" />
                 <AlertTitle>New API Key Created</AlertTitle>
@@ -224,12 +253,12 @@ export function ApiKeysForm() {
                     </span>
                     <div className="mt-1 flex items-center space-x-2">
                       <code className="relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm overflow-x-auto max-w-full">
-                        {createdApiKey.key}
+                        {createdApiKeyState.key}
                       </code>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleCopyApiKey(createdApiKey.key)}
+                        onClick={() => handleCopyApiKey(createdApiKeyState.key)}
                       >
                         <ClipboardCopy className="h-4 w-4" />
                       </Button>
@@ -238,7 +267,10 @@ export function ApiKeysForm() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowNewKeyDialog(false)}
+                    onClick={() => {
+                      setShowNewKeyDialog(false);
+                      setCreatedApiKey(null);
+                    }}
                   >
                     Close
                   </Button>
