@@ -337,7 +337,9 @@ export default function CalendarPage() {
                         key={session.id} 
                         className="flex justify-between items-center text-xs bg-blue-100 p-1 rounded"
                       >
-                        <span>{format(new Date(session.date), "HH:mm")} - {getCourseNameById(session.courseId)}</span>
+                        <span>
+                          {format(new Date(session.date), "HH")}:{session.minute.toString().padStart(2, '0')} - {getCourseNameById(session.courseId)}
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon"
