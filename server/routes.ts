@@ -166,7 +166,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // DELETE endpoint for events removed per request
+  // DELETE endpoint for events
+  app.delete("/api/events/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid event ID" });
+      }
+      
+      const success = await dbStorage.deleteEvent(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Event not found" });
+      }
+      
+      res.status(200).json({ success });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      res.status(500).json({ error: "Failed to delete event" });
+    }
+  });
   
   // Endpoint to toggle event sharing
   app.put("/api/events/:id/share", async (req: Request, res: Response) => {

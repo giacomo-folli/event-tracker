@@ -53,13 +53,16 @@ export function EventList({ events, onEventChange }: EventListProps) {
     try {
       if (eventToDelete === null) return;
       
-      await apiRequest("DELETE", `/api/events/${eventToDelete}`);
+      const res = await apiRequest("DELETE", `/api/events/${eventToDelete}`);
+      
+      // We don't need to parse the response since we've improved apiRequest to handle empty responses
       
       toast({
         title: "Event deleted",
         description: "The event has been deleted successfully",
       });
       
+      // Call onEventChange to refresh the list
       onEventChange();
     } catch (error) {
       console.error("Error deleting event:", error);
