@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,8 @@ export default function CalendarPage() {
   const { 
     data: sessionsData, 
     isLoading: isLoadingSessions, 
-    error: sessionsError 
+    error: sessionsError,
+    refetch: refetchSessions
   } = useQuery({
     queryKey: ['/api/training-sessions/month', year, month],
     queryFn: async () => {
@@ -219,6 +220,8 @@ export default function CalendarPage() {
             data.type === 'training_session_updated') {
           // Refresh training sessions data
           queryClient.invalidateQueries({ queryKey: ['/api/training-sessions/month'] });
+          // Also directly refetch the current month's data
+          refetchSessions();
         }
       } catch (error) {
         console.error("Error processing WebSocket message:", error);
@@ -232,7 +235,7 @@ export default function CalendarPage() {
     return () => {
       socket.close();
     };
-  }, []);
+  }, [refetchSessions]);
   
   // Prepare the training sessions for display
   const sessions = sessionsData?.sessions || [];
@@ -279,6 +282,15 @@ export default function CalendarPage() {
               <Button variant="outline" size="sm" onClick={previousMonth}>Previous</Button>
               <Button variant="outline" size="sm" onClick={goToToday}>Today</Button>
               <Button variant="outline" size="sm" onClick={nextMonth}>Next</Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => refetchSessions()}
+                className="ml-2"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
             </div>
           </div>
           <div className="text-2xl font-bold text-center pt-2">{monthYear}</div>
