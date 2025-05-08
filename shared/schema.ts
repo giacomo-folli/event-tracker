@@ -360,6 +360,8 @@ export const courseParticipantFormSchema = insertCourseParticipantSchema.extend(
   email: z.string().email("Please enter a valid email address"),
 });
 
+export type InsertCourseParticipant = z.infer<typeof insertCourseParticipantSchema>;
+
 
 
 // Training sessions schemas
@@ -398,4 +400,3 @@ export const apiKeyFormSchema = insertApiKeySchema.extend({
 
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
-export type InsertCourseParticipant = z.infer<typeof insertCourseParticipantSchema>;

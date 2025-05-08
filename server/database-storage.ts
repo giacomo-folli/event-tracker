@@ -1,6 +1,6 @@
 import { db, pool } from "./db";
 import { 
-  users, events, courses, media, courseMedia, eventParticipants, trainingSessions, apiKeys,
+  users, events, courses, media, courseMedia, eventParticipants, trainingSessions, apiKeys, courseParticipants,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
@@ -8,7 +8,7 @@ import {
   type CourseMedia, type InsertCourseMedia,
   type EventParticipant, type InsertEventParticipant,
   type TrainingSession, type InsertTrainingSession,
-  type ApiKey
+  type ApiKey, type CourseParticipant, type InsertCourseParticipant
 } from "@shared/schema";
 import { eq, and, desc, asc, gte, lte } from "drizzle-orm";
 import { IStorage } from "./storage";
