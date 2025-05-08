@@ -23,9 +23,23 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Define an interface that includes the expected types for the API
+interface EventApiUpdate {
+  id: number;
+  title: string;
+  description: string | null;
+  location: string | null;
+  startDate: string; // ISO string format for the API
+  endDate: string; // ISO string format for the API
+  creatorId: number | null;
+  isShared: boolean;
+  shareToken: string | null;
+  shareUrl: string | null;
+}
+
 interface EditEventFormProps {
   event: Event;
-  onSave: (updatedEvent: Event) => void;
+  onSave: (updatedEvent: EventApiUpdate) => void;
 }
 
 export function EditEventForm({ event, onSave }: EditEventFormProps) {
@@ -71,8 +85,8 @@ export function EditEventForm({ event, onSave }: EditEventFormProps) {
         title: values.title,
         location: values.location,
         description: values.description || null,
-        startDate: startDateTime,
-        endDate: endDateTime,
+        startDate: startDateTime.toISOString(),
+        endDate: endDateTime.toISOString(),
       };
       
       // Call the onSave callback with the updated event

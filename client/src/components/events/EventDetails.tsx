@@ -78,32 +78,6 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>{event.title}</CardTitle>
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center">
-              <Switch 
-                id="share-toggle"
-                checked={event.isShared || false}
-                onCheckedChange={handleToggleSharing}
-                disabled={toggleSharingMutation.isPending}
-                className="mr-2"
-              />
-              <Label htmlFor="share-toggle" className="text-sm font-medium">
-                {event.isShared ? "Public" : "Private"}
-              </Label>
-            </div>
-            
-            {event.isShared && event.shareUrl && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-2 text-xs flex items-center"
-                onClick={copyShareUrl}
-              >
-                <LinkIcon className="h-3.5 w-3.5 mr-1" />
-                {copied ? 'Copied!' : 'Copy Link'}
-              </Button>
-            )}
-          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -131,6 +105,43 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Description</h3>
                 <p className="mt-1">{event.description || "No description provided"}</p>
+              </div>
+              
+              <div className="border rounded-md p-3 bg-gray-50">
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center">
+                    <h4 className="text-sm font-medium mr-2">Sharing Options</h4>
+                    <div className="flex items-center">
+                      <Switch 
+                        id="share-toggle"
+                        checked={event.isShared || false}
+                        onCheckedChange={handleToggleSharing}
+                        disabled={toggleSharingMutation.isPending}
+                        className="mr-2"
+                      />
+                      <Label htmlFor="share-toggle" className="text-sm font-medium">
+                        {event.isShared ? "Public" : "Private"}
+                      </Label>
+                    </div>
+                  </div>
+                  
+                  {event.isShared && event.shareUrl && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-xs flex items-center"
+                      onClick={copyShareUrl}
+                    >
+                      <LinkIcon className="h-3.5 w-3.5 mr-1" />
+                      {copied ? 'Copied!' : 'Copy Link'}
+                    </Button>
+                  )}
+                </div>
+                {!event.isShared && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Toggle the switch above to make this event publicly accessible.
+                  </p>
+                )}
               </div>
               
               {event.isShared && event.shareUrl && (
