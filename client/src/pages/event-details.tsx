@@ -46,12 +46,28 @@ export default function EventDetailsPage() {
     });
   }
 
+  // Define interface to match EditEventForm
+  interface EventApiUpdate {
+    id: number;
+    title: string;
+    description: string | null;
+    location: string | null;
+    startDate: string; // ISO string format for the API
+    endDate: string; // ISO string format for the API
+    creatorId: number | null;
+    isShared: boolean;
+    shareToken: string | null;
+    shareUrl: string | null;
+  }
+  
   // Update event mutation
   const updateEventMutation = useMutation({
-    mutationFn: async (updatedEvent: Event) => {
+    mutationFn: async (updatedEvent: EventApiUpdate) => {
       if (!eventId) throw new Error("No event ID available");
       const response = await apiRequest("PUT", `/api/events/${eventId}`, updatedEvent);
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error (" + response.status + "):", errorData);
         throw new Error("Failed to update event");
       }
       return await response.json();
@@ -76,7 +92,7 @@ export default function EventDetailsPage() {
     }
   });
 
-  const handleSaveEvent = async (updatedEvent: Event) => {
+  const handleSaveEvent = async (updatedEvent: EventApiUpdate) => {
     updateEventMutation.mutate(updatedEvent);
   };
 

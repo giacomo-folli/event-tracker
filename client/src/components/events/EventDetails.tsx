@@ -14,9 +14,23 @@ import { Link as LinkIcon, ExternalLink, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// Interface for API updates
+interface EventApiUpdate {
+  id: number;
+  title: string;
+  description: string | null;
+  location: string | null;
+  startDate: string; // ISO string format for the API
+  endDate: string; // ISO string format for the API
+  creatorId: number | null;
+  isShared: boolean;
+  shareToken: string | null;
+  shareUrl: string | null;
+}
+
 interface EventDetailsProps {
   event: Event;
-  onSave: (updatedEvent: Event) => void;
+  onSave: (updatedEvent: EventApiUpdate) => void;
 }
 
 export default function EventDetails({ event, onSave }: EventDetailsProps) {
