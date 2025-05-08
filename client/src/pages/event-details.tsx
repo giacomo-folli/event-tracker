@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { Event } from "@shared/schema";
 import { Header } from "@/components/layout/Header";
@@ -12,6 +13,8 @@ export default function EventDetailsPage() {
   const [, params] = useRoute("/admin/events/:id");
   const eventId = params?.id ? parseInt(params.id) : null;
   const { toast } = useToast();
+  // State to store the local version of the event (for immediate UI updates)
+  const [localEvent, setLocalEvent] = useState<Event | null>(null);
 
   // Use React Query to fetch event data
   const { 
@@ -33,8 +36,15 @@ export default function EventDetailsPage() {
     enabled: !!eventId,
   });
 
-  // Extract event from query result
-  const event = eventData as Event | null;
+  // Update localEvent when eventData changes
+  useEffect(() => {
+    if (eventData) {
+      setLocalEvent(eventData);
+    }
+  }, [eventData]);
+
+  // Extract event from local state
+  const event = localEvent || eventData as Event | null;
 
   // Show error toast if query fails
   if (error) {
@@ -73,9 +83,13 @@ export default function EventDetailsPage() {
       return await response.json();
     },
     onSuccess: (data) => {
-      // Invalidate queries to refresh the data
+      console.log("Update successful. Server response:", data);
+      
+      // Update local state with the server response
+      setLocalEvent(data.event);
+      
+      // Invalidate queries to refresh the list view
       queryClient.invalidateQueries({ queryKey: ['/api/events'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/events', eventId?.toString()] });
       
       toast({
         title: "Success",
@@ -94,6 +108,24 @@ export default function EventDetailsPage() {
 
   const handleSaveEvent = async (updatedEvent: EventApiUpdate) => {
     console.log('Sending updated event to API:', updatedEvent);
+    
+    // Immediately update the local state for instant UI feedback
+    if (event) {
+      // Convert the dates properly for the local state object
+      const updatedLocalEvent = {
+        ...event,
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+        location: updatedEvent.location,
+        isShared: updatedEvent.isShared,
+        shareToken: updatedEvent.shareToken,
+        shareUrl: updatedEvent.shareUrl
+      };
+      
+      setLocalEvent(updatedLocalEvent);
+    }
+    
+    // Send update to the server
     updateEventMutation.mutate(updatedEvent);
   };
 
