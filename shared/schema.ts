@@ -85,6 +85,7 @@ export const trainingSessions = pgTable("training_sessions", {
   courseId: integer("course_id").notNull().references(() => courses.id, { onDelete: "cascade" }),
   date: timestamp("date").notNull(),
   hour: integer("hour").notNull(), // 0-23 hour of day
+  minute: integer("minute").default(0).notNull(), // 0-59 minute of hour
   creatorId: integer("creator_id").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -369,6 +370,7 @@ export const insertTrainingSessionSchema = createInsertSchema(trainingSessions)
   .pick({
     courseId: true,
     hour: true,
+    minute: true,
     creatorId: true,
   })
   .extend({
@@ -381,6 +383,10 @@ export const trainingSessionFormSchema = insertTrainingSessionSchema.extend({
     message: "Date is required"
   }),
   hour: z.coerce.number().min(0).max(23),
+  minute: z.coerce.number().min(0).max(59).default(0),
+  isRecurring: z.boolean().default(false),
+  recurrenceCount: z.coerce.number().min(1).max(52).optional(),
+  recurrenceType: z.enum(['daily', 'weekly', 'monthly']).optional(),
 });
 
 export type InsertTrainingSession = z.infer<typeof insertTrainingSessionSchema>;
