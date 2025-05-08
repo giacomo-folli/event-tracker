@@ -2,7 +2,7 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage as dbStorage } from "./storage";
-import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema, insertEventParticipantSchema, eventParticipantFormSchema, updateEventSharingSchema, insertTrainingSessionSchema } from "@shared/schema";
+import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema, insertEventParticipantSchema, eventParticipantFormSchema, updateEventSharingSchema, insertTrainingSessionSchema, insertCourseParticipantSchema } from "@shared/schema";
 import { join } from "path";
 import * as fs from "fs";
 import multer from "multer";
@@ -563,6 +563,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Cache-Control', 'public, max-age=86400');
     next();
   }, express.static(uploadDir));
+
+  // Course participants endpoints
+  app.get("/api/courses/:courseId/participants", async (req: Request, res: Response) => {
+    try {
+      const courseId = parseInt(req.params.courseId);
+      if (isNaN(courseId)) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+
+      const participants = await dbStorage.getCourseParticipants(courseId);
+      res.json({ participants });
+    } catch (error) {
+      console.error("Error fetching course participants:", error);
+      res.status(500).json({ error: "Failed to fetch course participants" });
+    }
+  });
+
+  app.post("/api/courses/:courseId/participants", async (req: Request, res: Response) => {
+    try {
+      const courseId = parseInt(req.params.courseId);
+      if (isNaN(courseId)) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+
+      // Validate the participant data
+      const result = insertCourseParticipantSchema.safeParse({
+        ...req.body,
+        courseId,
+        attended: false, // Default to not attended
+        registeredAt: new Date()
+      });
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error.format() });
+      }
+
+      try {
+        const participant = await dbStorage.createCourseParticipant(result.data);
+        res.status(201).json({ participant });
+      } catch (error: any) {
+        // Handle specific errors from the storage layer
+        if (error.message?.includes('registered for this course')) {
+          return res.status(409).json({ error: error.message });
+        }
+        if (error.message?.includes('Course not found')) {
+          return res.status(404).json({ error: error.message });
+        }
+        throw error;
+      }
+    } catch (error) {
+      console.error("Error creating course participant:", error);
+      res.status(500).json({ error: "Failed to register participant" });
+    }
+  });
+
+  app.put("/api/courses/:courseId/participants/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const courseId = parseInt(req.params.courseId);
+      if (isNaN(id) || isNaN(courseId)) {
+        return res.status(400).json({ error: "Invalid ID" });
+      }
+
+      const { attended } = req.body;
+      if (typeof attended !== 'boolean') {
+        return res.status(400).json({ error: "Attended status must be a boolean" });
+      }
+
+      const participant = await dbStorage.updateCourseParticipantAttendance(id, attended);
+      if (!participant) {
+        return res.status(404).json({ error: "Participant not found" });
+      }
+
+      res.json({ participant });
+    } catch (error) {
+      console.error("Error updating course participant attendance:", error);
+      res.status(500).json({ error: "Failed to update participant attendance" });
+    }
+  });
 
   // Course-media relation endpoints
   app.get("/api/courses/:courseId/media", async (req: Request, res: Response) => {

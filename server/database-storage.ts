@@ -496,4 +496,66 @@ export class DatabaseStorage implements IStorage {
       
     return result.length > 0;
   }
+  
+  // Course participants methods
+  async getCourseParticipants(courseId: number): Promise<CourseParticipant[]> {
+    return await db.select()
+      .from(courseParticipants)
+      .where(eq(courseParticipants.courseId, courseId))
+      .orderBy(desc(courseParticipants.registeredAt));
+  }
+
+  async getCourseParticipant(id: number): Promise<CourseParticipant | undefined> {
+    const [participant] = await db.select()
+      .from(courseParticipants)
+      .where(eq(courseParticipants.id, id));
+    return participant || undefined;
+  }
+
+  async createCourseParticipant(participant: InsertCourseParticipant): Promise<CourseParticipant> {
+    try {
+      // Check if the course exists
+      const [course] = await db.select()
+        .from(courses)
+        .where(eq(courses.id, participant.courseId));
+      
+      if (!course) {
+        throw new Error('Course not found');
+      }
+
+      // Check if email already exists for this course
+      const existingParticipants = await db.select()
+        .from(courseParticipants)
+        .where(and(
+          eq(courseParticipants.courseId, participant.courseId),
+          eq(courseParticipants.email, participant.email)
+        ));
+      
+      if (existingParticipants.length > 0) {
+        throw new Error('This email is already registered for this course');
+      }
+      
+      const [newParticipant] = await db
+        .insert(courseParticipants)
+        .values(participant)
+        .returning();
+      return newParticipant;
+    } catch (error: any) {
+      if (error.message?.includes('registered for this course') || 
+          error.message?.includes('Course not found')) {
+        throw error;
+      }
+      console.error('Error creating course participant:', error);
+      throw new Error('Failed to register participant');
+    }
+  }
+
+  async updateCourseParticipantAttendance(id: number, attended: boolean): Promise<CourseParticipant | undefined> {
+    const [participant] = await db
+      .update(courseParticipants)
+      .set({ attended })
+      .where(eq(courseParticipants.id, id))
+      .returning();
+    return participant || undefined;
+  }
 }
