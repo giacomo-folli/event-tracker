@@ -161,8 +161,8 @@ export function ApiKeysForm() {
                     <FormItem>
                       <FormLabel>Expiry</FormLabel>
                       <Select
-                        onValueChange={(value) => field.onChange(parseInt(value))}
-                        defaultValue={field.value?.toString()}
+                        onValueChange={(value) => field.onChange(value === "never" ? null : parseInt(value))}
+                        defaultValue={field.value?.toString() || "30"}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -174,10 +174,11 @@ export function ApiKeysForm() {
                           <SelectItem value="30">30 days</SelectItem>
                           <SelectItem value="90">90 days</SelectItem>
                           <SelectItem value="365">1 year</SelectItem>
+                          <SelectItem value="never">Never expires</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormDescription>
-                        When this API key should expire.
+                        When this API key should expire. Select "Never expires" for a permanent key.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
