@@ -64,6 +64,12 @@ export interface IStorage {
   createTrainingSession(session: InsertTrainingSession): Promise<TrainingSession>;
   deleteTrainingSession(id: number): Promise<boolean>;
   
+  // Course participants methods
+  getCourseParticipants(courseId: number): Promise<CourseParticipant[]>;
+  getCourseParticipant(id: number): Promise<CourseParticipant | undefined>;
+  createCourseParticipant(participant: InsertCourseParticipant): Promise<CourseParticipant>;
+  updateCourseParticipantAttendance(id: number, attended: boolean): Promise<CourseParticipant | undefined>;
+  
   // API keys methods
   getUserApiKeys(userId: number): Promise<ApiKey[]>;
   getApiKey(id: number): Promise<ApiKey | undefined>;
@@ -513,6 +519,50 @@ export class MemStorage implements IStorage {
   
   async deleteApiKey(id: number): Promise<boolean> {
     return this.apiKeys.delete(id);
+  }
+
+  // Course participants implementation
+  private courseParticipants: Map<number, CourseParticipant> = new Map();
+  private courseParticipantCurrentId: number = 1;
+
+  async getCourseParticipants(courseId: number): Promise<CourseParticipant[]> {
+    return Array.from(this.courseParticipants.values())
+      .filter(participant => participant.courseId === courseId);
+  }
+
+  async getCourseParticipant(id: number): Promise<CourseParticipant | undefined> {
+    return this.courseParticipants.get(id);
+  }
+
+  async createCourseParticipant(participant: InsertCourseParticipant): Promise<CourseParticipant> {
+    // Check if email already exists for this course
+    const exists = Array.from(this.courseParticipants.values())
+      .some(p => p.courseId === participant.courseId && p.email === participant.email);
+    
+    if (exists) {
+      throw new Error('This email is already registered for this course');
+    }
+
+    const id = this.courseParticipantCurrentId++;
+    const now = new Date();
+    const courseParticipant: CourseParticipant = {
+      ...participant,
+      id,
+      registeredAt: now,
+      attended: participant.attended ?? false
+    };
+    
+    this.courseParticipants.set(id, courseParticipant);
+    return courseParticipant;
+  }
+
+  async updateCourseParticipantAttendance(id: number, attended: boolean): Promise<CourseParticipant | undefined> {
+    const participant = this.courseParticipants.get(id);
+    if (!participant) return undefined;
+    
+    const updatedParticipant = { ...participant, attended };
+    this.courseParticipants.set(id, updatedParticipant);
+    return updatedParticipant;
   }
 }
 

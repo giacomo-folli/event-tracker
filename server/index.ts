@@ -8,37 +8,45 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Configure CORS
-app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc)
-    if (!origin) return callback(null, true);
-    
-    // List of allowed origins
-    const allowedOrigins = [
-      /\.replit\.app$/,
-      /^http:\/\/localhost/,
-      /\.spock\.replit\.dev$/
-    ];
-    
-    // Also explicitly allow the bernini.replit.app domain
-    if (origin === 'https://bernini.replit.app') {
-      return callback(null, true);
-    }
-    
-    // Check if origin matches any pattern in the allowed list
-    for (const pattern of allowedOrigins) {
-      if (pattern.test(origin)) {
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, etc)
+      if (!origin) return callback(null, true);
+
+      // List of allowed origins
+      const allowedOrigins = [
+        /\.replit\.app$/,
+        /\.vercel\.app$/,
+        /^http:\/\/localhost/,
+        /\.spock\.replit\.dev$/,
+      ];
+
+      // Also explicitly allow specific domains
+      const explicitlyAllowedDomains = [
+        "https://bernini.replit.app",
+        "https://public-event-template.vercel.app"
+      ];
+      
+      if (explicitlyAllowedDomains.includes(origin)) {
         return callback(null, true);
       }
-    }
-    
-    // If no match, don't allow
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
-}));
+
+      // Check if origin matches any pattern in the allowed list
+      for (const pattern of allowedOrigins) {
+        if (pattern.test(origin)) {
+          return callback(null, true);
+        }
+      }
+
+      // If no match, don't allow
+      callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-API-Key"],
+  }),
+);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -94,11 +102,14 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    },
+    () => {
+      log(`serving on port ${port}`);
+    },
+  );
 })();

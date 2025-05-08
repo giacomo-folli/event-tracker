@@ -139,10 +139,29 @@ export const apiKeysRelations = relations(apiKeys, ({ one }) => ({
 export const coursesRelations = relations(courses, ({ many }) => ({
   courseMedia: many(courseMedia),
   trainingSessions: many(trainingSessions),
+  participants: many(courseParticipants),
 }));
 
 export const mediaRelations = relations(media, ({ many }) => ({
   courseMedia: many(courseMedia),
+}));
+
+// Course participants schema
+export const courseParticipants = pgTable("course_participants", {
+  id: serial("id").primaryKey(),
+  courseId: integer("course_id").notNull().references(() => courses.id),
+  email: text("email").notNull(),
+  registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  attended: boolean("attended").default(false).notNull(),
+});
+
+export type CourseParticipant = typeof courseParticipants.$inferSelect;
+
+export const courseParticipantsRelations = relations(courseParticipants, ({ one }) => ({
+  course: one(courses, {
+    fields: [courseParticipants.courseId],
+    references: [courses.id],
+  }),
 }));
 
 export const courseMediaRelations = relations(courseMedia, ({ one }) => ({
@@ -329,6 +348,20 @@ export type CourseMedia = typeof courseMedia.$inferSelect;
 export type InsertEventParticipant = z.infer<typeof insertEventParticipantSchema>;
 export type EventParticipant = typeof eventParticipants.$inferSelect;
 
+// Course participant schemas
+export const insertCourseParticipantSchema = createInsertSchema(courseParticipants)
+  .pick({
+    courseId: true,
+    email: true,
+    attended: true,
+  });
+
+export const courseParticipantFormSchema = insertCourseParticipantSchema.extend({
+  email: z.string().email("Please enter a valid email address"),
+});
+
+
+
 // Training sessions schemas
 export const insertTrainingSessionSchema = createInsertSchema(trainingSessions)
   .pick({
@@ -365,3 +398,4 @@ export const apiKeyFormSchema = insertApiKeySchema.extend({
 
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
+export type InsertCourseParticipant = z.infer<typeof insertCourseParticipantSchema>;
