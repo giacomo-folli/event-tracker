@@ -27,7 +27,7 @@ export function Header({ title, showAddButton = false, onAddClick, backRoute }: 
         {showAddButton && (
           <Button 
             onClick={onAddClick}
-            className="inline-flex items-center"
+            className="inline-flex items-center create-event-button"
           >
             <PlusIcon className="-ml-1 mr-2 h-5 w-5" />
             Add Event

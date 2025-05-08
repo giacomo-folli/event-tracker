@@ -38,12 +38,12 @@ export default function Settings() {
       <Header title="User Settings" />
       
       <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
-        <div className="bg-white shadow-sm rounded-lg p-6">
+        <div className="bg-white shadow-sm rounded-lg p-6 settings-header">
           <Tabs defaultValue="profile" value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="notifications">Notifications</TabsTrigger>
+              <TabsTrigger value="notifications" className="notification-settings">Notifications</TabsTrigger>
               <TabsTrigger value="api-keys">API Keys</TabsTrigger>
             </TabsList>
             
@@ -66,7 +66,7 @@ export default function Settings() {
             </TabsContent>
             
             <TabsContent value="api-keys">
-              <div className="py-6">
+              <div className="py-6 api-keys-section">
                 <ApiKeysForm />
               </div>
             </TabsContent>

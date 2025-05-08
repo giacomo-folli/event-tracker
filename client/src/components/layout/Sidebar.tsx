@@ -30,7 +30,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
     <div 
       className={cn(
-        "fixed lg:static inset-y-0 left-0 z-10 w-64 bg-white shadow-lg lg:shadow-none transition-transform duration-300 lg:translate-x-0 lg:block",
+        "fixed lg:static inset-y-0 left-0 z-10 w-64 bg-white shadow-lg lg:shadow-none transition-transform duration-300 lg:translate-x-0 lg:block sidebar",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}
     >

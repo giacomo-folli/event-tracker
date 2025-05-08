@@ -116,36 +116,7 @@ router.put('/:id/toggle', isAuthenticated, async (req: ApiKeyAuthRequest, res: R
   }
 });
 
-// Delete an API key
-router.delete('/:id', isAuthenticated, async (req: ApiKeyAuthRequest, res: Response) => {
-  try {
-    const userId = getUserId(req);
-    if (!userId) {
-      return res.status(401).json({ error: 'User not authenticated' });
-    }
-    
-    const keyId = parseInt(req.params.id);
-    if (isNaN(keyId)) {
-      return res.status(400).json({ error: 'Invalid API key ID' });
-    }
-    
-    // Check if the API key belongs to the user
-    const apiKey = await storage.getApiKey(keyId);
-    if (!apiKey || apiKey.userId !== userId) {
-      return res.status(403).json({ error: 'Not authorized to delete this API key' });
-    }
-    
-    const success = await storage.deleteApiKey(keyId);
-    
-    if (!success) {
-      return res.status(404).json({ error: 'API key not found' });
-    }
-    
-    res.json({ message: 'API key deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting API key:', error);
-    res.status(500).json({ error: 'Failed to delete API key' });
-  }
-});
+// DELETE endpoint for API keys removed per request
+// Instead, use toggle endpoint to deactivate keys
 
 export default router;

@@ -14,6 +14,8 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { useState } from "react";
 import { ProtectedRoute } from "@/lib/ProtectedRoute";
 import { AuthProvider, useAuth } from "./hooks/AuthProvider";
+import OnboardingTutorial from "./components/tutorial/OnboardingTutorial";
+import TutorialButton from "./components/tutorial/TutorialButton";
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -35,6 +37,9 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex justify-end p-4">
+          <TutorialButton variant="text" showDropdown className="ml-auto" />
+        </div>
         {children}
       </div>
     </div>
@@ -114,7 +119,9 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <OnboardingTutorial>
+        <AppRoutes />
+      </OnboardingTutorial>
     </AuthProvider>
   );
 }
