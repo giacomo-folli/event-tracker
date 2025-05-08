@@ -137,16 +137,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Invalid event ID" });
       }
 
+      console.log("Received event update request for ID:", id);
+      console.log("Request body:", req.body);
+
       const result = updateEventSchema.safeParse(req.body);
       if (!result.success) {
+        console.error("Failed schema validation:", result.error.format());
         return res.status(400).json({ error: result.error.format() });
       }
+
+      console.log("Validated data:", result.data);
 
       const updatedEvent = await dbStorage.updateEvent(id, result.data);
       if (!updatedEvent) {
         return res.status(404).json({ error: "Event not found" });
       }
 
+      console.log("Event updated successfully:", updatedEvent);
       res.json({ event: updatedEvent });
     } catch (error) {
       res.status(500).json({ error: "Failed to update event" });

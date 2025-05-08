@@ -110,12 +110,20 @@ export class DatabaseStorage implements IStorage {
   }
   
   async updateEvent(id: number, updateData: UpdateEvent): Promise<Event | undefined> {
-    const [event] = await db
-      .update(events)
-      .set(updateData)
-      .where(eq(events.id, id))
-      .returning();
-    return event || undefined;
+    console.log(`Updating event with ID ${id} with data:`, updateData);
+    try {
+      const [event] = await db
+        .update(events)
+        .set(updateData)
+        .where(eq(events.id, id))
+        .returning();
+      
+      console.log("Updated event result:", event);
+      return event || undefined;
+    } catch (error) {
+      console.error("Error in updateEvent:", error);
+      throw error;
+    }
   }
   
   async deleteEvent(id: number): Promise<boolean> {

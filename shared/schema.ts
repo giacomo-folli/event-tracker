@@ -143,17 +143,11 @@ export const insertEventSchema = createInsertSchema(events)
   });
 
 export const updateEventSchema = createInsertSchema(events)
-  .pick({
-    title: true,
-    description: true,
-    location: true,
-    isShared: true,
-    shareToken: true,
-    shareUrl: true,
-  })
+  .partial() // Make all fields optional for updates
   .extend({
-    startDate: z.coerce.date(),
-    endDate: z.coerce.date(),
+    // But still coerce dates if they are provided
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().optional(),
   });
 
 // Partial event update for sharing

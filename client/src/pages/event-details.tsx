@@ -93,6 +93,7 @@ export default function EventDetailsPage() {
   });
 
   const handleSaveEvent = async (updatedEvent: EventApiUpdate) => {
+    console.log('Sending updated event to API:', updatedEvent);
     updateEventMutation.mutate(updatedEvent);
   };
 
