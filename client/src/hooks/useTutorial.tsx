@@ -1,304 +1,240 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useCallback, useEffect } from 'react';
+import TutorialPopover from '@/components/tutorial/TutorialPopover';
 
-// Define types for tutorial steps
 export type TutorialStep = {
   id: string;
+  order: number;
   title: string;
   description: string;
   targetElement: string; // CSS selector for the element to highlight
   position: 'top' | 'right' | 'bottom' | 'left' | 'center';
-  order: number;
   route?: string; // Optional route to navigate to for this step
 };
 
-// Define the available tutorial flows
-export type TutorialFlow = 'main' | 'events' | 'courses' | 'media' | 'calendar' | 'settings';
-
-type TutorialContextType = {
+interface TutorialContextType {
   isActive: boolean;
-  startTutorial: (flow?: TutorialFlow) => void;
-  endTutorial: () => void;
-  pauseTutorial: () => void;
-  resumeTutorial: () => void;
-  nextStep: () => void;
-  prevStep: () => void;
   currentStep: TutorialStep | null;
   progress: number;
   isPaused: boolean;
-  hasTutorialBeenSeen: (flow: TutorialFlow) => boolean;
-  markTutorialAsSeen: (flow: TutorialFlow) => void;
+  startTutorial: () => void;
+  endTutorial: () => void;
+  nextStep: () => void;
+  prevStep: () => void;
+  pauseTutorial: () => void;
+  resumeTutorial: () => void;
+  goToStep: (stepId: string) => void;
+}
+
+// Tutorial steps data - defines the complete tutorial flow
+const tutorialSteps: TutorialStep[] = [
+  {
+    id: 'welcome',
+    order: 0,
+    title: 'Welcome to Event Admin!',
+    description: 'This quick tutorial will guide you through the main features of our platform. Let\'s get started!',
+    targetElement: '.sidebar',
+    position: 'right',
+    route: '/'
+  },
+  {
+    id: 'event-management',
+    order: 1,
+    title: 'Event Management',
+    description: 'This is your main dashboard where you can view, create, and manage all your events.',
+    targetElement: '.dashboard-overview',
+    position: 'bottom',
+    route: '/'
+  },
+  {
+    id: 'create-event',
+    order: 2,
+    title: 'Create New Events',
+    description: 'Click this button to create a new event with details like title, dates, location, and description.',
+    targetElement: '.create-event-button',
+    position: 'left',
+    route: '/'
+  },
+  {
+    id: 'event-list',
+    order: 3,
+    title: 'Your Events',
+    description: 'All your events will appear in this list. Click on any event to view and edit its details.',
+    targetElement: '.events-header',
+    position: 'bottom',
+    route: '/'
+  },
+  {
+    id: 'settings-navigation',
+    order: 4,
+    title: 'User Settings',
+    description: 'Navigate to your settings page to customize your profile and application preferences.',
+    targetElement: '.settings-nav-item',
+    position: 'right',
+    route: '/'
+  },
+  {
+    id: 'notification-settings',
+    order: 5,
+    title: 'Notification Settings',
+    description: 'Configure how you receive notifications about events, attendees, and system updates.',
+    targetElement: '.notification-settings',
+    position: 'bottom',
+    route: '/settings'
+  },
+  {
+    id: 'api-keys',
+    order: 6,
+    title: 'API Keys',
+    description: 'Generate and manage API keys to integrate our system with your other tools and applications.',
+    targetElement: '.api-keys-section',
+    position: 'top',
+    route: '/settings'
+  },
+  {
+    id: 'completion',
+    order: 7,
+    title: 'You\'re All Set!',
+    description: 'You\'ve completed the tutorial and are ready to use Event Admin. Explore the platform and let us know if you have any questions!',
+    targetElement: '.page-header',
+    position: 'bottom',
+    route: '/'
+  }
+];
+
+// Default context value
+const defaultContext: TutorialContextType = {
+  isActive: false,
+  currentStep: null,
+  progress: 0,
+  isPaused: false,
+  startTutorial: () => {},
+  endTutorial: () => {},
+  nextStep: () => {},
+  prevStep: () => {},
+  pauseTutorial: () => {},
+  resumeTutorial: () => {},
+  goToStep: () => {}
 };
 
-const TutorialContext = createContext<TutorialContextType | undefined>(undefined);
+const TutorialContext = createContext<TutorialContextType>(defaultContext);
 
-// Define tutorial steps for different flows
-const tutorialSteps: Record<TutorialFlow, TutorialStep[]> = {
-  main: [
-    {
-      id: 'welcome',
-      title: 'Welcome to Event Manager!',
-      description: 'This quick tutorial will show you how to use the main features of the application.',
-      targetElement: 'body',
-      position: 'center',
-      order: 0,
-    },
-    {
-      id: 'dashboard',
-      title: 'Dashboard',
-      description: 'This is your dashboard where you can see a summary of all your events and activities.',
-      targetElement: '.dashboard-overview',
-      position: 'bottom',
-      order: 1,
-    },
-    {
-      id: 'sidebar',
-      title: 'Navigation',
-      description: 'Use the sidebar to navigate between different sections of the application.',
-      targetElement: '.sidebar',
-      position: 'right',
-      order: 2,
-    },
-    {
-      id: 'create-event',
-      title: 'Create Events',
-      description: 'Click here to create a new event. You can set dates, add details, and more.',
-      targetElement: '.create-event-button',
-      position: 'bottom',
-      order: 3,
-    },
-    {
-      id: 'settings',
-      title: 'Settings',
-      description: 'Access your account settings to manage notifications, API keys, and more.',
-      targetElement: '.sidebar-settings',
-      position: 'right',
-      order: 4,
-      route: '/settings',
-    },
-  ],
-  events: [
-    {
-      id: 'events-intro',
-      title: 'Events Management',
-      description: 'Here you can view and manage all your events.',
-      targetElement: '.events-header',
-      position: 'bottom',
-      order: 0,
-    },
-    {
-      id: 'event-details',
-      title: 'Event Details',
-      description: 'Click on any event to view its details and manage participants.',
-      targetElement: '.event-card',
-      position: 'bottom',
-      order: 1,
-    },
-    {
-      id: 'share-event',
-      title: 'Share Events',
-      description: 'You can share events with others using a secure link.',
-      targetElement: '.share-button',
-      position: 'left',
-      order: 2,
-    },
-  ],
-  courses: [
-    {
-      id: 'courses-intro',
-      title: 'Courses Management',
-      description: 'Here you can view and manage your training courses.',
-      targetElement: '.courses-header',
-      position: 'bottom',
-      order: 0,
-    },
-    {
-      id: 'course-details',
-      title: 'Course Details',
-      description: 'Click on any course to view its details and manage participants.',
-      targetElement: '.course-card',
-      position: 'bottom',
-      order: 1,
-    },
-    {
-      id: 'add-media',
-      title: 'Add Media',
-      description: 'You can add images, videos, and documents to your courses.',
-      targetElement: '.add-media-button',
-      position: 'bottom',
-      order: 2,
-    },
-  ],
-  media: [
-    {
-      id: 'media-intro',
-      title: 'Media Library',
-      description: 'This is your media library where you can upload and manage files.',
-      targetElement: '.media-header',
-      position: 'bottom',
-      order: 0,
-    },
-    {
-      id: 'upload-media',
-      title: 'Upload Media',
-      description: 'Click here to upload new images, videos, or documents.',
-      targetElement: '.upload-button',
-      position: 'left',
-      order: 1,
-    },
-  ],
-  calendar: [
-    {
-      id: 'calendar-intro',
-      title: 'Training Calendar',
-      description: 'View and manage your training sessions on this calendar.',
-      targetElement: '.calendar-container',
-      position: 'top',
-      order: 0,
-    },
-    {
-      id: 'add-session',
-      title: 'Add Training Session',
-      description: 'Click on a day to add a new training session.',
-      targetElement: '.calendar-day',
-      position: 'right',
-      order: 1,
-    },
-  ],
-  settings: [
-    {
-      id: 'settings-intro',
-      title: 'Account Settings',
-      description: 'Here you can configure your account settings.',
-      targetElement: '.settings-header',
-      position: 'bottom',
-      order: 0,
-    },
-    {
-      id: 'notification-settings',
-      title: 'Notification Settings',
-      description: 'Configure how you want to be notified about events and changes.',
-      targetElement: '.notification-settings',
-      position: 'right',
-      order: 1,
-    },
-    {
-      id: 'api-keys',
-      title: 'API Keys',
-      description: 'Generate and manage API keys for integrating with other applications.',
-      targetElement: '.api-keys-section',
-      position: 'bottom',
-      order: 2,
-    },
-  ],
-};
-
-// Local storage key for tutorial completion status
-const TUTORIAL_SEEN_KEY = 'eventManager_tutorialSeen';
-
-export const TutorialProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isActive, setIsActive] = useState(false);
-  const [currentFlow, setCurrentFlow] = useState<TutorialFlow>('main');
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [seenTutorials, setSeenTutorials] = useState<Record<TutorialFlow, boolean>>(() => {
-    const storedData = localStorage.getItem(TUTORIAL_SEEN_KEY);
-    return storedData
-      ? JSON.parse(storedData)
-      : {
-          main: false,
-          events: false,
-          courses: false,
-          media: false,
-          calendar: false,
-          settings: false,
-        };
-  });
+  
+  // Calculate progress percentage
+  const progress = Math.min(
+    ((currentStepIndex + 1) / tutorialSteps.length) * 100,
+    100
+  );
+  
+  const currentStep = isActive ? tutorialSteps[currentStepIndex] || null : null;
 
-  // Save seen tutorials to local storage
+  // Store tutorial state in local storage
   useEffect(() => {
-    localStorage.setItem(TUTORIAL_SEEN_KEY, JSON.stringify(seenTutorials));
-  }, [seenTutorials]);
+    // Only store if the tutorial is active
+    if (isActive) {
+      localStorage.setItem('tutorialState', JSON.stringify({
+        isActive,
+        currentStepIndex,
+        isPaused,
+      }));
+    } else {
+      // Clear when tutorial ends
+      localStorage.removeItem('tutorialState');
+    }
+  }, [isActive, currentStepIndex, isPaused]);
+  
+  // Restore tutorial state on component mount
+  useEffect(() => {
+    const savedState = localStorage.getItem('tutorialState');
+    if (savedState) {
+      try {
+        const { isActive, currentStepIndex, isPaused } = JSON.parse(savedState);
+        setIsActive(isActive);
+        setCurrentStepIndex(currentStepIndex);
+        setIsPaused(isPaused);
+      } catch (error) {
+        console.error('Error parsing tutorial state:', error);
+        localStorage.removeItem('tutorialState');
+      }
+    }
+  }, []);
 
-  const currentStep = isActive && tutorialSteps[currentFlow].length > currentStepIndex
-    ? tutorialSteps[currentFlow][currentStepIndex]
-    : null;
-
-  // Calculate progress (0-100%)
-  const progress = isActive && tutorialSteps[currentFlow].length > 0
-    ? ((currentStepIndex + 1) / tutorialSteps[currentFlow].length) * 100
-    : 0;
-
-  const startTutorial = (flow: TutorialFlow = 'main') => {
-    setCurrentFlow(flow);
-    setCurrentStepIndex(0);
+  const startTutorial = useCallback(() => {
     setIsActive(true);
+    setCurrentStepIndex(0);
     setIsPaused(false);
-  };
+  }, []);
 
-  const endTutorial = () => {
+  const endTutorial = useCallback(() => {
     setIsActive(false);
-    markTutorialAsSeen(currentFlow);
-  };
-
-  const pauseTutorial = () => {
-    setIsPaused(true);
-  };
-
-  const resumeTutorial = () => {
+    setCurrentStepIndex(0);
     setIsPaused(false);
-  };
+    localStorage.removeItem('tutorialState');
+  }, []);
 
-  const nextStep = () => {
-    if (currentStepIndex < tutorialSteps[currentFlow].length - 1) {
+  const nextStep = useCallback(() => {
+    if (currentStepIndex < tutorialSteps.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     } else {
+      // End the tutorial if we're at the last step
       endTutorial();
     }
-  };
+  }, [currentStepIndex, endTutorial]);
 
-  const prevStep = () => {
+  const prevStep = useCallback(() => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     }
-  };
+  }, [currentStepIndex]);
 
-  const hasTutorialBeenSeen = (flow: TutorialFlow): boolean => {
-    return seenTutorials[flow];
-  };
+  const pauseTutorial = useCallback(() => {
+    setIsPaused(true);
+  }, []);
 
-  const markTutorialAsSeen = (flow: TutorialFlow) => {
-    setSeenTutorials(prev => ({
-      ...prev,
-      [flow]: true
-    }));
-  };
+  const resumeTutorial = useCallback(() => {
+    setIsPaused(false);
+  }, []);
+
+  const goToStep = useCallback((stepId: string) => {
+    const stepIndex = tutorialSteps.findIndex(step => step.id === stepId);
+    if (stepIndex !== -1) {
+      setCurrentStepIndex(stepIndex);
+    }
+  }, []);
 
   const value = {
     isActive,
-    startTutorial,
-    endTutorial,
-    pauseTutorial,
-    resumeTutorial,
-    nextStep,
-    prevStep,
     currentStep,
     progress,
     isPaused,
-    hasTutorialBeenSeen,
-    markTutorialAsSeen
+    startTutorial,
+    endTutorial,
+    nextStep,
+    prevStep,
+    pauseTutorial,
+    resumeTutorial,
+    goToStep
   };
 
   return (
     <TutorialContext.Provider value={value}>
       {children}
+      <TutorialPopover 
+        isActive={isActive}
+        currentStep={currentStep}
+        progress={progress}
+        isPaused={isPaused}
+        nextStep={nextStep}
+        prevStep={prevStep}
+        pauseTutorial={pauseTutorial}
+        resumeTutorial={resumeTutorial}
+        endTutorial={endTutorial}
+      />
     </TutorialContext.Provider>
   );
 };
 
-export const useTutorial = (): TutorialContextType => {
-  const context = useContext(TutorialContext);
-  if (context === undefined) {
-    throw new Error('useTutorial must be used within a TutorialProvider');
-  }
-  return context;
-};
+export const useTutorial = () => useContext(TutorialContext);

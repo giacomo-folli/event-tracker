@@ -76,7 +76,7 @@ export function EventList({ events, onEventChange }: EventListProps) {
   return (
     <>
       {/* Events Table (Desktop) */}
-      <div className="hidden md:block overflow-hidden shadow-sm rounded-lg">
+      <div className="hidden md:block overflow-hidden shadow-sm rounded-lg events-header">
         <Table>
           <TableHeader>
             <TableRow>
@@ -145,7 +145,7 @@ export function EventList({ events, onEventChange }: EventListProps) {
           events.map((event) => (
             <Card 
               key={event.id} 
-              className="overflow-hidden cursor-pointer hover:bg-gray-100 transition-colors duration-200" 
+              className="overflow-hidden cursor-pointer hover:bg-gray-100 transition-colors duration-200 event-card" 
               onClick={(e) => {
                 // Don't redirect if the delete button was clicked
                 if ((e.target as HTMLElement).closest('button')) return;

@@ -38,7 +38,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex justify-end p-4">
-          <TutorialButton variant="text" showDropdown className="ml-auto" />
+          <TutorialButton position="top-right" showText={false} className="ml-auto" />
         </div>
         {children}
       </div>

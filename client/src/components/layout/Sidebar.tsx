@@ -109,7 +109,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             <a 
               onClick={handleNavClick}
               className={cn(
-                "group flex items-center px-3 py-2 text-sm font-medium rounded-md",
+                "group flex items-center px-3 py-2 text-sm font-medium rounded-md settings-nav-item",
                 location === "/settings" 
                   ? "bg-primary-50 text-primary"
                   : "text-gray-600 hover:bg-gray-50"

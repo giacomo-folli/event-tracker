@@ -11,7 +11,7 @@ interface HeaderProps {
 
 export function Header({ title, showAddButton = false, onAddClick, backRoute }: HeaderProps) {
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white shadow-sm border-b border-gray-200 page-header">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center">
           {backRoute && (

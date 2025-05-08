@@ -22,18 +22,29 @@ type Highlight = {
   borderRadius?: number;
 };
 
-const TutorialPopover: React.FC = () => {
-  const { 
-    isActive, 
-    currentStep, 
-    progress, 
-    nextStep, 
-    prevStep, 
-    endTutorial, 
-    isPaused, 
-    pauseTutorial, 
-    resumeTutorial 
-  } = useTutorial();
+interface TutorialPopoverProps {
+  isActive: boolean;
+  currentStep: TutorialStep | null;
+  progress: number;
+  isPaused: boolean;
+  nextStep: () => void;
+  prevStep: () => void;
+  pauseTutorial: () => void;
+  resumeTutorial: () => void;
+  endTutorial: () => void;
+}
+
+const TutorialPopover: React.FC<TutorialPopoverProps> = ({
+  isActive,
+  currentStep,
+  progress,
+  isPaused,
+  nextStep,
+  prevStep,
+  endTutorial,
+  pauseTutorial,
+  resumeTutorial
+}) => {
   
   const popoverRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<PositionStyles>({});
@@ -43,6 +54,7 @@ const TutorialPopover: React.FC = () => {
   // Handle navigation if needed for the current step
   useEffect(() => {
     if (currentStep?.route && isActive && !isPaused) {
+      // Using the second element of the array which is the navigate function
       navigate(currentStep.route);
     }
   }, [currentStep, isActive, isPaused, navigate]);
