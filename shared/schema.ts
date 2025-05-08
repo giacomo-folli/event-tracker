@@ -142,16 +142,19 @@ export const insertEventSchema = createInsertSchema(events)
     endDate: z.coerce.date(),
   });
 
-export const updateEventSchema = createInsertSchema(events).pick({
-  title: true,
-  description: true,
-  location: true,
-  startDate: true,
-  endDate: true,
-  isShared: true,
-  shareToken: true,
-  shareUrl: true,
-});
+export const updateEventSchema = createInsertSchema(events)
+  .pick({
+    title: true,
+    description: true,
+    location: true,
+    isShared: true,
+    shareToken: true,
+    shareUrl: true,
+  })
+  .extend({
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
+  });
 
 // Partial event update for sharing
 export const updateEventSharingSchema = createInsertSchema(events).partial().pick({
