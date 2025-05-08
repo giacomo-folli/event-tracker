@@ -9,10 +9,15 @@ import multer from "multer";
 import { z } from "zod";
 import { setupAuth } from "./auth";
 import { generateShareToken, generateShareUrl } from "./utils";
+import { apiKeyAuth } from "./middleware/api-key-auth";
+import apiKeysRouter from "./routes/api-keys";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Setup authentication
+  // Setup authentication (session-based)
   await setupAuth(app);
+  
+  // Setup API key authentication
+  app.use(apiKeyAuth);
   
   // Setup upload directory for media files
   const uploadDir = join(process.cwd(), 'uploads');
@@ -863,6 +868,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete training session" });
     }
   });
+
+  // API Keys endpoints
+  app.use("/api/keys", apiKeysRouter);
 
   const httpServer = createServer(app);
   
