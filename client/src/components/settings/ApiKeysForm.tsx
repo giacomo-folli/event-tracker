@@ -205,30 +205,51 @@ export function ApiKeysForm() {
                   <Button 
                     onClick={() => {
                       try {
+                        // Get current form values
                         const values = form.getValues();
                         console.log("Creating API key with values:", values);
                         
-                        // Directly fetch to debug
-                        fetch('/api/keys', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(values),
+                        // First get the current user ID
+                        fetch('/api/user', {
                           credentials: 'include'
                         })
-                        .then(response => {
-                          console.log("API response status:", response.status);
-                          return response.json();
-                        })
-                        .then(data => {
-                          console.log("API response data:", data);
-                          if (data.apiKey) {
-                            queryClient.invalidateQueries({ queryKey: ['/api/keys'] });
-                            // Set the created API key to show in the UI
-                            setCreatedApiKey(data.apiKey);
+                        .then(response => response.json())
+                        .then(userData => {
+                          console.log("Got user data:", userData);
+                          
+                          if (!userData.user || !userData.user.id) {
+                            console.error("No user found or not logged in");
+                            return;
                           }
+                          
+                          // Now create the API key with the userId
+                          fetch('/api/keys', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              ...values,
+                              userId: userData.user.id
+                            }),
+                            credentials: 'include'
+                          })
+                          .then(response => {
+                            console.log("API response status:", response.status);
+                            return response.json();
+                          })
+                          .then(data => {
+                            console.log("API response data:", data);
+                            if (data.apiKey) {
+                              queryClient.invalidateQueries({ queryKey: ['/api/keys'] });
+                              // Set the created API key to show in the UI
+                              setCreatedApiKey(data.apiKey);
+                            }
+                          })
+                          .catch(err => {
+                            console.error("Error creating API key:", err);
+                          });
                         })
                         .catch(err => {
-                          console.error("Error in fetch:", err);
+                          console.error("Error fetching user data:", err);
                         });
                       } catch (err) {
                         console.error("Error in button click handler:", err);
