@@ -7,6 +7,7 @@ import Media from "@/pages/media";
 import EventView from "@/pages/event-view";
 import EventDetailsPage from "@/pages/event-details";
 import SharedEventPage from "@/pages/shared-event";
+import CalendarPage from "@/pages/calendar";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -69,6 +70,7 @@ function AuthenticatedApp() {
         <Route path="/media" component={Media} />
         <Route path="/settings" component={Settings} />
         <Route path="/api-docs" component={ApiDocs} />
+        <Route path="/calendar" component={CalendarPage} />
         <Route path="/events/:id" component={EventView} />
         <Route path="/admin/events/:id" component={EventDetailsPage} />
         <Route component={NotFound} />
