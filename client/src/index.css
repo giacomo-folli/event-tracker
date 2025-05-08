@@ -56,3 +56,60 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+/* Tutorial Animation Effects */
+@keyframes pulse-highlight {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Tutorial Elements Styling */
+.tutorial-highlight {
+  position: relative;
+}
+
+.tutorial-highlight::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: inherit;
+  animation: pulse-highlight 2s infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.tutorial-bounce {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.tutorial-float {
+  animation: float 3s ease-in-out infinite;
+}
