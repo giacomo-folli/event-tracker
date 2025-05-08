@@ -50,13 +50,37 @@ export default function EventDetails({ event, onSave }: EventDetailsProps) {
       const newStatus = !event.isShared;
       console.log("Toggling event sharing status to:", newStatus);
       
+      // Create optimistic update for the UI
+      const optimisticEvent = {
+        ...event,
+        isShared: newStatus
+      };
+      
+      // For immediate UI update when disabling sharing
+      if (!newStatus) {
+        // Convert to API format (string dates)
+        const apiEvent: EventApiUpdate = {
+          ...optimisticEvent,
+          startDate: optimisticEvent.startDate.toISOString(),
+          endDate: optimisticEvent.endDate.toISOString()
+        };
+        // Update UI immediately
+        onSave(apiEvent);
+      }
+      
       // Execute sharing mutation
-      await toggleSharingMutation.mutateAsync({
+      const result = await toggleSharingMutation.mutateAsync({
         eventId: event.id,
         isShared: newStatus
       });
       
-      console.log("Toggle completed, checking for updated data");
+      // When enabling sharing, we need to update with the server response
+      // to get the generated share token and URL
+      if (newStatus && result.event) {
+        onSave(result.event);
+      }
+      
+      console.log("Toggle completed, event updated with result:", result);
     } catch (error) {
       console.error('Error toggling event sharing:', error);
     }
