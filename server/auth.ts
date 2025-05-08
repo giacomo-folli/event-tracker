@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { ApiKeyAuthRequest } from "./middleware/api-key-auth";
 
 declare global {
   namespace Express {
@@ -153,14 +154,27 @@ export async function setupAuth(app: Express) {
     });
   });
 
-  // Check if user is authenticated
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: "Not authenticated" });
+  // Check if user is authenticated (via session or API key)
+  app.get("/api/user", async (req: ApiKeyAuthRequest, res) => {
+    // Check for session authentication
+    if (req.isAuthenticated()) {
+      // Return user from session
+      const { password, ...safeUser } = req.user as SelectUser;
+      return res.json({ user: safeUser, auth_method: 'session' });
     }
     
-    // Don't send password back to client
-    const { password, ...safeUser } = req.user as SelectUser;
-    res.json({ user: safeUser });
+    // Check for API key authentication
+    if (req.apiKey) {
+      // Look up user by ID from the API key
+      const user = await storage.getUser(req.apiKey.userId);
+      if (user) {
+        // Don't send password back to client
+        const { password, ...safeUser } = user;
+        return res.json({ user: safeUser, auth_method: 'api_key' });
+      }
+    }
+    
+    // Not authenticated by any method
+    return res.status(401).json({ error: "Not authenticated" });
   });
 }
