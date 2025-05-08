@@ -84,7 +84,12 @@ export function ApiKeysForm() {
   };
 
   function onSubmit(values: z.infer<typeof apiKeyFormSchema>) {
-    createApiKey(values);
+    createApiKey(values, {
+      onSuccess: () => {
+        // Leave dialog open to show the created key
+        // Form will be reset on close
+      }
+    });
   }
 
   const handleCopyApiKey = (key: string) => {

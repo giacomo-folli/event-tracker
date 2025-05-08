@@ -31,12 +31,13 @@ export function useApiKeys() {
       const res = await apiRequest('POST', '/api/keys', data);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/keys'] });
       toast({
         title: "API Key Created",
         description: "Your new API key has been created. Make sure to copy it now as it won't be shown again.",
       });
+      return data;
     },
     onError: (error: Error) => {
       toast({

@@ -52,8 +52,8 @@ router.post('/', isAuthenticated, async (req: ApiKeyAuthRequest, res: Response) 
     
     const { name, expiryDays } = validationResult.data;
     
-    // Create the API key
-    const apiKey = await storage.createApiKey(userId, name, expiryDays);
+    // Create the API key (null expiryDays means it never expires)
+    const apiKey = await storage.createApiKey(userId, name, expiryDays === null ? undefined : expiryDays);
     
     // Return the full key only once during creation
     res.status(201).json({ 
