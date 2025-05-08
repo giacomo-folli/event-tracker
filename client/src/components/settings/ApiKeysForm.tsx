@@ -77,6 +77,11 @@ export function ApiKeysForm() {
       expiryDays: 30,
     },
   });
+  
+  // Reset form when dialog closes
+  const resetForm = () => {
+    form.reset({ name: "", expiryDays: 30 });
+  };
 
   function onSubmit(values: z.infer<typeof apiKeyFormSchema>) {
     createApiKey(values);
@@ -125,7 +130,14 @@ export function ApiKeysForm() {
             Create and manage API keys for programmatic access to the application.
           </p>
         </div>
-        <Dialog open={showNewKeyDialog} onOpenChange={setShowNewKeyDialog}>
+        <Dialog 
+          open={showNewKeyDialog} 
+          onOpenChange={(open) => {
+            setShowNewKeyDialog(open);
+            if (!open) {
+              resetForm();
+            }
+          }}>
           <DialogTrigger asChild>
             <Button>Create New API Key</Button>
           </DialogTrigger>

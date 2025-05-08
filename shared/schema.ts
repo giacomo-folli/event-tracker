@@ -360,7 +360,7 @@ export const insertApiKeySchema = createInsertSchema(apiKeys)
 
 export const apiKeyFormSchema = insertApiKeySchema.extend({
   name: z.string().min(1, "Name is required"),
-  expiryDays: z.number().min(1).max(365).optional(),
+  expiryDays: z.number().min(1).max(365).nullable().optional(),
 });
 
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
