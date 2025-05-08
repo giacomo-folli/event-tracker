@@ -166,23 +166,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/events/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid event ID" });
-      }
-
-      const success = await dbStorage.deleteEvent(id);
-      if (!success) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete event" });
-    }
-  });
+  // DELETE endpoint for events removed per request
   
   // Endpoint to toggle event sharing
   app.put("/api/events/:id/share", async (req: Request, res: Response) => {
@@ -413,23 +397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/courses/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid course ID" });
-      }
-
-      const success = await dbStorage.deleteCourse(id);
-      if (!success) {
-        return res.status(404).json({ error: "Course not found" });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete course" });
-    }
-  });
+  // DELETE endpoint for courses removed per request
 
   // REST endpoints for media
   app.get("/api/media", async (req: Request, res: Response) => {
@@ -521,41 +489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Delete media
-  app.delete("/api/media/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid media ID" });
-      }
-
-      // Get the media first to know the file path
-      const mediaItem = await dbStorage.getMediaById(id);
-      if (!mediaItem) {
-        return res.status(404).json({ error: "Media not found" });
-      }
-
-      // Delete from database
-      const success = await dbStorage.deleteMedia(id);
-      if (!success) {
-        return res.status(500).json({ error: "Failed to delete media from database" });
-      }
-
-      // Delete the physical file
-      try {
-        if (fs.existsSync(mediaItem.filePath)) {
-          fs.unlinkSync(mediaItem.filePath);
-        }
-      } catch (fileError) {
-        console.error("Failed to delete media file:", fileError);
-        // Continue anyway since the database record is gone
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete media" });
-    }
-  });
+  // DELETE endpoint for media removed per request
 
   // Serve uploaded files
   app.use('/uploads', (req, res, next) => {
@@ -692,26 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Unlink media from course
-  app.delete("/api/courses/:courseId/media/:mediaId", async (req: Request, res: Response) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      const mediaId = parseInt(req.params.mediaId);
-      
-      if (isNaN(courseId) || isNaN(mediaId)) {
-        return res.status(400).json({ error: "Invalid course or media ID" });
-      }
-
-      const success = await dbStorage.unlinkMediaFromCourse(courseId, mediaId);
-      if (!success) {
-        return res.status(404).json({ error: "Course-media relationship not found" });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to unlink media from course" });
-    }
-  });
+  // DELETE endpoint for unlinking media from course removed per request
 
   // Update media order within a course
   app.put("/api/courses/:courseId/media/:mediaId/order", async (req: Request, res: Response) => {
@@ -816,23 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/events/participants/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid participant ID" });
-      }
-
-      const success = await dbStorage.deleteEventParticipant(id);
-      if (!success) {
-        return res.status(404).json({ error: "Participant not found" });
-      }
-
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to delete participant" });
-    }
-  });
+  // DELETE endpoint for event participants removed per request
   
   // Training sessions endpoints
   app.get("/api/training-sessions", async (req: Request, res: Response) => {
@@ -918,35 +817,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/training-sessions/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid training session ID" });
-      }
-      
-      const success = await dbStorage.deleteTrainingSession(id);
-      if (!success) {
-        return res.status(404).json({ error: "Training session not found" });
-      }
-      
-      // Notify connected clients about the deleted training session
-      wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'training_session_deleted',
-            sessionId: id
-          }));
-        }
-      });
-      
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting training session:", error);
-      res.status(500).json({ error: "Failed to delete training session" });
-    }
-  });
+  // DELETE endpoint for training sessions removed per request
 
   // API Keys endpoints
   app.use("/api/keys", apiKeysRouter);
