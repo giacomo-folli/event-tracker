@@ -80,6 +80,7 @@ export function EditEventForm({ event, onSave }: EditEventFormProps) {
       );
       
       // Create the updated event object
+      // Important: preserve all original event properties AND update with form values
       const updatedEvent = {
         ...event,
         title: values.title,
@@ -87,7 +88,13 @@ export function EditEventForm({ event, onSave }: EditEventFormProps) {
         description: values.description || null,
         startDate: startDateTime.toISOString(),
         endDate: endDateTime.toISOString(),
+        // Explicitly retain sharing information
+        isShared: event.isShared,
+        shareToken: event.shareToken,
+        shareUrl: event.shareUrl,
       };
+      
+      console.log("Submitting updated event:", updatedEvent);
       
       // Call the onSave callback with the updated event
       onSave(updatedEvent);
