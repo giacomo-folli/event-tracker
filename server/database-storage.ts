@@ -1,14 +1,15 @@
 import { db, pool } from "./db";
 import { 
-  users, events, courses, media, courseMedia, eventParticipants,
+  users, events, courses, media, courseMedia, eventParticipants, trainingSessions,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
   type Media, type InsertMedia, type UpdateMedia,
   type CourseMedia, type InsertCourseMedia,
-  type EventParticipant, type InsertEventParticipant
+  type EventParticipant, type InsertEventParticipant,
+  type TrainingSession, type InsertTrainingSession
 } from "@shared/schema";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, gte, lte } from "drizzle-orm";
 import { IStorage } from "./storage";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -362,6 +363,50 @@ export class DatabaseStorage implements IStorage {
     const result = await db
       .delete(eventParticipants)
       .where(eq(eventParticipants.id, id))
+      .returning();
+    return result.length > 0;
+  }
+  
+  // Training sessions methods
+  async getTrainingSessions(): Promise<TrainingSession[]> {
+    return await db.select().from(trainingSessions);
+  }
+  
+  async getTrainingSessionsByMonth(year: number, month: number): Promise<TrainingSession[]> {
+    // Create start and end date for the month
+    const startDate = new Date(year, month - 1, 1); // month is 1-12, Date expects 0-11
+    const endDate = new Date(year, month, 0); // Last day of the month
+    
+    return await db.select()
+      .from(trainingSessions)
+      .where(
+        and(
+          gte(trainingSessions.date, startDate),
+          lte(trainingSessions.date, endDate)
+        )
+      )
+      .orderBy(asc(trainingSessions.date), asc(trainingSessions.hour));
+  }
+  
+  async getTrainingSession(id: number): Promise<TrainingSession | undefined> {
+    const [session] = await db.select()
+      .from(trainingSessions)
+      .where(eq(trainingSessions.id, id));
+    return session || undefined;
+  }
+  
+  async createTrainingSession(insertSession: InsertTrainingSession): Promise<TrainingSession> {
+    const [session] = await db
+      .insert(trainingSessions)
+      .values(insertSession)
+      .returning();
+    return session;
+  }
+  
+  async deleteTrainingSession(id: number): Promise<boolean> {
+    const result = await db
+      .delete(trainingSessions)
+      .where(eq(trainingSessions.id, id))
       .returning();
     return result.length > 0;
   }

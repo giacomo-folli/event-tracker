@@ -54,6 +54,13 @@ export interface IStorage {
   createEventParticipant(participant: InsertEventParticipant): Promise<EventParticipant>;
   updateEventParticipantAttendance(id: number, attended: boolean): Promise<EventParticipant | undefined>;
   deleteEventParticipant(id: number): Promise<boolean>;
+  
+  // Training sessions methods
+  getTrainingSessions(): Promise<TrainingSession[]>;
+  getTrainingSessionsByMonth(year: number, month: number): Promise<TrainingSession[]>;
+  getTrainingSession(id: number): Promise<TrainingSession | undefined>;
+  createTrainingSession(session: InsertTrainingSession): Promise<TrainingSession>;
+  deleteTrainingSession(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
