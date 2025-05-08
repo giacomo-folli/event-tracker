@@ -17,7 +17,7 @@ router.get('/', isAuthenticated, async (req: ApiKeyAuthRequest, res: Response) =
     const apiKeys = await storage.getUserApiKeys(userId);
     
     // Don't send the actual key value in the response for security
-    const safeApiKeys = apiKeys.map(key => ({
+    const safeApiKeys = apiKeys.map((key: any) => ({
       id: key.id,
       name: key.name,
       createdAt: key.createdAt,

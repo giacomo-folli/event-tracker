@@ -1,13 +1,14 @@
 import { db, pool } from "./db";
 import { 
-  users, events, courses, media, courseMedia, eventParticipants, trainingSessions,
+  users, events, courses, media, courseMedia, eventParticipants, trainingSessions, apiKeys,
   type User, type InsertUser, type UpdateUserSettings,
   type Event, type InsertEvent, type UpdateEvent,
   type Course, type InsertCourse, type UpdateCourse,
   type Media, type InsertMedia, type UpdateMedia,
   type CourseMedia, type InsertCourseMedia,
   type EventParticipant, type InsertEventParticipant,
-  type TrainingSession, type InsertTrainingSession
+  type TrainingSession, type InsertTrainingSession,
+  type ApiKey
 } from "@shared/schema";
 import { eq, and, desc, asc, gte, lte } from "drizzle-orm";
 import { IStorage } from "./storage";
@@ -408,6 +409,89 @@ export class DatabaseStorage implements IStorage {
       .delete(trainingSessions)
       .where(eq(trainingSessions.id, id))
       .returning();
+    return result.length > 0;
+  }
+  
+  // API keys methods
+  async getUserApiKeys(userId: number): Promise<ApiKey[]> {
+    return await db.select()
+      .from(apiKeys)
+      .where(eq(apiKeys.userId, userId))
+      .orderBy(desc(apiKeys.createdAt));
+  }
+  
+  async getApiKey(id: number): Promise<ApiKey | undefined> {
+    const [apiKey] = await db.select()
+      .from(apiKeys)
+      .where(eq(apiKeys.id, id));
+    return apiKey || undefined;
+  }
+  
+  async getApiKeyByKey(key: string): Promise<ApiKey | undefined> {
+    const [apiKey] = await db.select()
+      .from(apiKeys)
+      .where(
+        and(
+          eq(apiKeys.key, key),
+          eq(apiKeys.isActive, true)
+        )
+      );
+    return apiKey || undefined;
+  }
+  
+  async createApiKey(userId: number, name: string, expiryDays?: number): Promise<ApiKey> {
+    // Generate a random API key (32 bytes hex string)
+    const key = require('crypto').randomBytes(32).toString('hex');
+    
+    // Set expiry date if provided
+    let expiresAt = null;
+    if (expiryDays) {
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + expiryDays);
+    }
+    
+    const [apiKey] = await db
+      .insert(apiKeys)
+      .values({
+        name,
+        key,
+        userId,
+        isActive: true,
+        expiresAt
+      })
+      .returning();
+      
+    return apiKey;
+  }
+  
+  async updateApiKeyLastUsed(id: number): Promise<ApiKey | undefined> {
+    const lastUsedAt = new Date();
+    
+    const [apiKey] = await db
+      .update(apiKeys)
+      .set({ lastUsedAt })
+      .where(eq(apiKeys.id, id))
+      .returning();
+      
+    return apiKey || undefined;
+  }
+  
+  async toggleApiKeyStatus(id: number, isActive: boolean): Promise<ApiKey | undefined> {
+    const [apiKey] = await db
+      .update(apiKeys)
+      .set({ isActive })
+      .where(eq(apiKeys.id, id))
+      .returning();
+      
+    return apiKey || undefined;
+  }
+  
+  async deleteApiKey(id: number): Promise<boolean> {
+    const result = await db
+      .delete(apiKeys)
+      .where(eq(apiKeys.id, id))
+      .returning();
+      
     return result.length > 0;
   }
 }
