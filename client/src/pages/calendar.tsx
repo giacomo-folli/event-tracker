@@ -6,7 +6,8 @@ import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
@@ -73,7 +74,11 @@ export default function CalendarPage() {
     defaultValues: {
       courseId: undefined,
       date: selectedDate || new Date(),
-      hour: 9 // Default to 9 AM
+      hour: 9, // Default to 9 AM
+      minute: 0, // Default to 0 minutes
+      isRecurring: false,
+      recurrenceType: 'weekly',
+      recurrenceCount: 4
     }
   });
   
@@ -132,7 +137,58 @@ export default function CalendarPage() {
   
   // Handle form submission
   const onSubmit = (data: z.infer<typeof trainingSessionFormSchema>) => {
-    createSessionMutation.mutate(data);
+    const { isRecurring, recurrenceType, recurrenceCount, ...sessionData } = data;
+    
+    // If not recurring, just create a single session
+    if (!isRecurring) {
+      createSessionMutation.mutate({...sessionData, isRecurring: false});
+      return;
+    }
+    
+    // For recurring sessions, create multiple sessions
+    const sessions = [];
+    const baseDate = new Date(sessionData.date);
+    
+    for (let i = 0; i < (recurrenceCount || 1); i++) {
+      const sessionDate = new Date(baseDate);
+      
+      // Calculate the date based on recurrence type
+      if (recurrenceType === 'daily') {
+        sessionDate.setDate(baseDate.getDate() + i);
+      } else if (recurrenceType === 'weekly') {
+        sessionDate.setDate(baseDate.getDate() + (i * 7));
+      } else if (recurrenceType === 'monthly') {
+        sessionDate.setMonth(baseDate.getMonth() + i);
+      }
+      
+      // Create session with calculated date
+      sessions.push({
+        ...sessionData,
+        date: sessionDate,
+        isRecurring: true
+      });
+    }
+    
+    // Create all sessions sequentially
+    Promise.all(sessions.map(session => 
+      apiRequest("POST", "/api/training-sessions", session)
+    ))
+    .then(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/training-sessions/month'] });
+      toast({
+        title: "Success",
+        description: `Created ${sessions.length} training sessions successfully`
+      });
+      setIsAddSessionDialogOpen(false);
+      form.reset();
+    })
+    .catch(error => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive"
+      });
+    });
   };
   
   // Handle session deletion
@@ -343,25 +399,126 @@ export default function CalendarPage() {
                 )}
               />
               
+              <div className="flex space-x-4">
+                <FormField
+                  control={form.control}
+                  name="hour"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Hour (0-23)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          max={23} 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="minute"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormLabel>Minute (0-59)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={0} 
+                          max={59} 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <FormField
                 control={form.control}
-                name="hour"
+                name="isRecurring"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Hour (0-23)</FormLabel>
+                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min={0} 
-                        max={23} 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>Recurring session</FormLabel>
+                      <FormDescription>
+                        Create multiple sessions at once with a recurring pattern
+                      </FormDescription>
+                    </div>
                   </FormItem>
                 )}
               />
+              
+              {form.watch("isRecurring") && (
+                <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+                  <FormField
+                    control={form.control}
+                    name="recurrenceType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Recurrence Pattern</FormLabel>
+                        <Select 
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select pattern" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="recurrenceCount"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Number of Occurrences</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            min={1} 
+                            max={52} 
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value))}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {form.watch("recurrenceType") === "daily" && 
+                            "Sessions will be created daily starting from the selected date."}
+                          {form.watch("recurrenceType") === "weekly" && 
+                            "Sessions will be created weekly on the same day of week."}
+                          {form.watch("recurrenceType") === "monthly" && 
+                            "Sessions will be created monthly on the same day of month."}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
               
               <DialogFooter>
                 <Button 
@@ -375,7 +532,9 @@ export default function CalendarPage() {
                   type="submit" 
                   disabled={createSessionMutation.isPending}
                 >
-                  {createSessionMutation.isPending ? "Adding..." : "Add Session"}
+                  {createSessionMutation.isPending ? "Adding..." : form.watch("isRecurring") 
+                    ? `Add ${form.watch("recurrenceCount") || 1} Sessions` 
+                    : "Add Session"}
                 </Button>
               </DialogFooter>
             </form>
