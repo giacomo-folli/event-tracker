@@ -1,7 +1,8 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage as dbStorage } from "./storage";
-import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema, insertEventParticipantSchema, eventParticipantFormSchema, updateEventSharingSchema } from "@shared/schema";
+import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema, insertEventParticipantSchema, eventParticipantFormSchema, updateEventSharingSchema, insertTrainingSessionSchema } from "@shared/schema";
 import { join } from "path";
 import * as fs from "fs";
 import multer from "multer";
@@ -748,7 +749,155 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete participant" });
     }
   });
+  
+  // Training sessions endpoints
+  app.get("/api/training-sessions", async (req: Request, res: Response) => {
+    try {
+      const sessions = await dbStorage.getTrainingSessions();
+      res.json({ sessions });
+    } catch (error) {
+      console.error("Error getting training sessions:", error);
+      res.status(500).json({ error: "Failed to fetch training sessions" });
+    }
+  });
+
+  app.get("/api/training-sessions/month/:year/:month", async (req: Request, res: Response) => {
+    try {
+      const year = parseInt(req.params.year);
+      const month = parseInt(req.params.month);
+      
+      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+        return res.status(400).json({ error: "Invalid year or month" });
+      }
+      
+      const sessions = await dbStorage.getTrainingSessionsByMonth(year, month);
+      res.json({ sessions });
+    } catch (error) {
+      console.error("Error getting monthly training sessions:", error);
+      res.status(500).json({ error: "Failed to fetch monthly training sessions" });
+    }
+  });
+
+  app.get("/api/training-sessions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid training session ID" });
+      }
+      
+      const session = await dbStorage.getTrainingSession(id);
+      if (!session) {
+        return res.status(404).json({ error: "Training session not found" });
+      }
+      
+      res.json({ session });
+    } catch (error) {
+      console.error("Error getting training session:", error);
+      res.status(500).json({ error: "Failed to fetch training session" });
+    }
+  });
+
+  app.post("/api/training-sessions", async (req: Request, res: Response) => {
+    try {
+      const parseResult = insertTrainingSessionSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          error: "Invalid training session data", 
+          details: parseResult.error.format() 
+        });
+      }
+      
+      // Verify course exists
+      const course = await dbStorage.getCourse(parseResult.data.courseId);
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      const session = await dbStorage.createTrainingSession(parseResult.data);
+      
+      // Notify connected clients about the new training session
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'training_session_created',
+            session
+          }));
+        }
+      });
+      
+      res.status(201).json({ session });
+    } catch (error) {
+      console.error("Error creating training session:", error);
+      res.status(500).json({ error: "Failed to create training session" });
+    }
+  });
+
+  app.delete("/api/training-sessions/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid training session ID" });
+      }
+      
+      const success = await dbStorage.deleteTrainingSession(id);
+      if (!success) {
+        return res.status(404).json({ error: "Training session not found" });
+      }
+      
+      // Notify connected clients about the deleted training session
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'training_session_deleted',
+            sessionId: id
+          }));
+        }
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting training session:", error);
+      res.status(500).json({ error: "Failed to delete training session" });
+    }
+  });
 
   const httpServer = createServer(app);
+  
+  // Set up WebSocket server for real-time updates
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  
+  wss.on('connection', (ws) => {
+    console.log('Client connected to WebSocket');
+    
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('Received message:', data);
+        
+        // Handle different message types
+        if (data.type === 'training_session_created') {
+          // Broadcast to all connected clients
+          wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'training_session_updated',
+                data: data.session
+              }));
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log('Client disconnected from WebSocket');
+    });
+  });
+  
   return httpServer;
 }
