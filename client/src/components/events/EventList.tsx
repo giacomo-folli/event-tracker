@@ -53,9 +53,12 @@ export function EventList({ events, onEventChange }: EventListProps) {
     try {
       if (eventToDelete === null) return;
       
+      console.log(`Deleting event ID: ${eventToDelete}`);
       const res = await apiRequest("DELETE", `/api/events/${eventToDelete}`);
+      console.log("Delete response:", res);
       
-      // We don't need to parse the response since we've improved apiRequest to handle empty responses
+      // We need to manually refresh the page because the cache invalidation isn't working properly
+      window.location.reload();
       
       toast({
         title: "Event deleted",
