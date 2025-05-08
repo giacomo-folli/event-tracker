@@ -15,9 +15,10 @@ const TutorialButton: React.FC<TutorialButtonProps> = ({
   showText = true,
   className = ''
 }) => {
-  const { startTutorial, isActive } = useTutorial();
+  const { startTutorial, isActive, hasCompletedTutorial } = useTutorial();
   
-  if (isActive) return null; // Don't show button while tutorial is active
+  // Don't show button if tutorial is active or has been completed
+  if (isActive || hasCompletedTutorial) return null;
   
   // Determine position styles
   const getPositionStyles = () => {

@@ -16,6 +16,7 @@ interface TutorialContextType {
   currentStep: TutorialStep | null;
   progress: number;
   isPaused: boolean;
+  hasCompletedTutorial: boolean;
   startTutorial: () => void;
   endTutorial: () => void;
   nextStep: () => void;
@@ -107,6 +108,7 @@ const defaultContext: TutorialContextType = {
   currentStep: null,
   progress: 0,
   isPaused: false,
+  hasCompletedTutorial: false,
   startTutorial: () => {},
   endTutorial: () => {},
   nextStep: () => {},
@@ -122,6 +124,10 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isActive, setIsActive] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [hasCompletedTutorial, setHasCompletedTutorial] = useState(() => {
+    // Check localStorage to see if tutorial has been completed
+    return localStorage.getItem('tutorialCompleted') === 'true';
+  });
   
   // Calculate progress percentage
   const progress = Math.min(
@@ -172,7 +178,9 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsActive(false);
     setCurrentStepIndex(0);
     setIsPaused(false);
+    setHasCompletedTutorial(true);
     localStorage.removeItem('tutorialState');
+    localStorage.setItem('tutorialCompleted', 'true');
   }, []);
 
   const nextStep = useCallback(() => {
@@ -210,6 +218,7 @@ export const TutorialProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     currentStep,
     progress,
     isPaused,
+    hasCompletedTutorial,
     startTutorial,
     endTutorial,
     nextStep,
