@@ -100,7 +100,7 @@ export default function EventDetailsPage() {
     <div className="flex-1 flex flex-col overflow-hidden">
       <Header 
         title={event ? `${event.title}` : "Event Details"} 
-        backRoute="/admin/events"
+        backRoute="/"
       />
       
       <main className="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-6">
