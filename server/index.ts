@@ -1,10 +1,44 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Configure CORS
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc)
+    if (!origin) return callback(null, true);
+    
+    // List of allowed origins
+    const allowedOrigins = [
+      /\.replit\.app$/,
+      /^http:\/\/localhost/,
+      /\.spock\.replit\.dev$/
+    ];
+    
+    // Also explicitly allow the bernini.replit.app domain
+    if (origin === 'https://bernini.replit.app') {
+      return callback(null, true);
+    }
+    
+    // Check if origin matches any pattern in the allowed list
+    for (const pattern of allowedOrigins) {
+      if (pattern.test(origin)) {
+        return callback(null, true);
+      }
+    }
+    
+    // If no match, don't allow
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+}));
 
 app.use((req, res, next) => {
   const start = Date.now();
