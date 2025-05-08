@@ -90,7 +90,15 @@ export function EventList({ events, onEventChange }: EventListProps) {
           <TableBody>
             {events.length > 0 ? (
               events.map((event) => (
-                <TableRow key={event.id}>
+                <TableRow 
+                  key={event.id} 
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={(e) => {
+                    // Don't redirect if the delete button was clicked
+                    if ((e.target as HTMLElement).closest('button')) return;
+                    window.location.href = `/admin/events/${event.id}`;
+                  }}
+                >
                   <TableCell className="font-medium">{event.title}</TableCell>
                   <TableCell>
                     <div>
@@ -105,29 +113,13 @@ export function EventList({ events, onEventChange }: EventListProps) {
                   <TableCell>{event.location}</TableCell>
                   <TableCell className="max-w-xs truncate">{event.description}</TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/admin/events/${event.id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 mr-2"
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        Details
-                      </Button>
-                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEditClick(event)}
-                      className="text-primary hover:text-primary mr-2"
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(event.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(event.id);
+                      }}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash className="h-4 w-4" />
@@ -151,33 +143,26 @@ export function EventList({ events, onEventChange }: EventListProps) {
       <div className="md:hidden space-y-4">
         {events.length > 0 ? (
           events.map((event) => (
-            <Card key={event.id} className="overflow-hidden">
+            <Card 
+              key={event.id} 
+              className="overflow-hidden cursor-pointer" 
+              onClick={(e) => {
+                // Don't redirect if the delete button was clicked
+                if ((e.target as HTMLElement).closest('button')) return;
+                window.location.href = `/admin/events/${event.id}`;
+              }}
+            >
               <div className="p-4 sm:px-6">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-gray-900 truncate">{event.title}</h3>
                   <div className="ml-2 flex-shrink-0 flex">
-                    <Link href={`/admin/events/${event.id}`}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="mr-1 text-blue-600 hover:bg-blue-50 flex items-center"
-                      >
-                        <Eye className="h-5 w-5 mr-1" />
-                        Details
-                      </Button>
-                    </Link>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleEditClick(event)}
-                      className="mr-1 text-primary hover:bg-primary-50"
-                    >
-                      <Pencil className="h-5 w-5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteClick(event.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteClick(event.id);
+                      }}
                       className="text-destructive hover:bg-red-50"
                     >
                       <Trash className="h-5 w-5" />
