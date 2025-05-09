@@ -37,6 +37,9 @@ export const courses = pgTable("courses", {
   duration: text("duration"),
   startDate: timestamp("start_date"),
   creatorId: integer("creator_id").references(() => users.id),
+  isShared: boolean("is_shared").default(false).notNull(),
+  shareToken: text("share_token").unique(),
+  shareUrl: text("share_url"),
 });
 
 // Media type enum
@@ -267,6 +270,13 @@ export const updateCourseSchema = createInsertSchema(courses)
     startDate: z.coerce.date().optional(),
   });
 
+// Partial course update for sharing
+export const updateCourseSharingSchema = createInsertSchema(courses).partial().pick({
+  isShared: true,
+  shareToken: true,
+  shareUrl: true,
+});
+
 // Extended schema with validation for course form
 export const courseFormSchema = insertCourseSchema.extend({
   title: z.string().min(1, "Title is required"),
@@ -325,6 +335,7 @@ export const insertCourseMediaSchema = createInsertSchema(courseMedia)
 
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type UpdateCourse = z.infer<typeof updateCourseSchema>;
+export type UpdateCourseSharing = z.infer<typeof updateCourseSharingSchema>;
 export type Course = typeof courses.$inferSelect;
 
 export type InsertMedia = z.infer<typeof insertMediaSchema>;
