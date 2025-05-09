@@ -13,6 +13,7 @@ import {
 import { 
   Form, 
   FormControl, 
+  FormDescription,
   FormField, 
   FormItem, 
   FormLabel, 
@@ -26,6 +27,7 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -196,7 +198,7 @@ export default function UsersPage() {
   });
 
   // Create user form
-  const form = useForm<CreateUserFormValues>({
+  const createForm = useForm<CreateUserFormValues>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       username: "",
@@ -207,8 +209,56 @@ export default function UsersPage() {
     },
   });
 
+  // Edit user form
+  const editForm = useForm<UpdateUserFormValues>({
+    resolver: zodResolver(updateUserSchema),
+    defaultValues: {
+      username: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      emailNotifications: true,
+      browserNotifications: false,
+      apiChangeNotifications: true,
+    },
+  });
+
   const handleCreateUser = (data: CreateUserFormValues) => {
     createUserMutation.mutate(data);
+  };
+  
+  const handleUpdateUser = (data: UpdateUserFormValues) => {
+    if (!selectedUser) return;
+    updateUserMutation.mutate({ id: selectedUser.id, data });
+  };
+  
+  const handleDeleteUser = () => {
+    if (!selectedUser) return;
+    deleteUserMutation.mutate(selectedUser.id);
+  };
+  
+  const openEditDialog = (user: User) => {
+    setSelectedUser(user);
+    
+    // Reset form with user data
+    editForm.reset({
+      username: user.username,
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      email: user.email || "",
+      password: "", // Don't populate password for security
+      emailNotifications: user.emailNotifications || false,
+      browserNotifications: user.browserNotifications || false,
+      apiChangeNotifications: user.apiChangeNotifications || false,
+    });
+    
+    setEditDialogOpen(true);
+  };
+  
+  const openDeleteDialog = (user: User) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
   };
 
   if (isLoading) {
@@ -241,7 +291,7 @@ export default function UsersPage() {
             Manage users and their access to the platform
           </p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="gap-1">
+        <Button onClick={() => setCreateDialogOpen(true)} className="gap-1">
           <UserPlus className="h-4 w-4" />
           <span>Add User</span>
         </Button>
@@ -283,8 +333,22 @@ export default function UsersPage() {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openEditDialog(user)}
+                        >
+                          <Pencil className="h-3.5 w-3.5 mr-1" />
                           Edit
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openDeleteDialog(user)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </TableCell>
@@ -297,7 +361,7 @@ export default function UsersPage() {
       </Card>
 
       {/* Create User Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Create New User</DialogTitle>
@@ -305,11 +369,11 @@ export default function UsersPage() {
               Create a new user account. The user will need to update their password on first login.
             </DialogDescription>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleCreateUser)} className="space-y-4">
+          <Form {...createForm}>
+            <form onSubmit={createForm.handleSubmit(handleCreateUser)} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
@@ -322,7 +386,7 @@ export default function UsersPage() {
                   )}
                 />
                 <FormField
-                  control={form.control}
+                  control={createForm.control}
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
@@ -337,7 +401,7 @@ export default function UsersPage() {
               </div>
               
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
@@ -351,7 +415,7 @@ export default function UsersPage() {
               />
               
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
@@ -369,7 +433,7 @@ export default function UsersPage() {
               />
               
               <FormField
-                control={form.control}
+                control={createForm.control}
                 name="password"
                 render={({ field }) => (
                   <FormItem>
@@ -390,7 +454,7 @@ export default function UsersPage() {
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={() => setDialogOpen(false)}
+                  onClick={() => setCreateDialogOpen(false)}
                   disabled={createUserMutation.isPending}
                 >
                   Cancel
@@ -413,6 +477,220 @@ export default function UsersPage() {
           </Form>
         </DialogContent>
       </Dialog>
+      
+      {/* Edit User Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user account details. Leave password blank to keep it unchanged.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...editForm}>
+            <form onSubmit={editForm.handleSubmit(handleUpdateUser)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={editForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="johndoe" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="email" 
+                        placeholder="john.doe@example.com" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={editForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password (Optional)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="password" 
+                        placeholder="Leave blank to keep unchanged" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="space-y-4 pt-2">
+                <h4 className="text-sm font-medium">Notification Settings</h4>
+                <div className="grid gap-2">
+                  <FormField
+                    control={editForm.control}
+                    name="emailNotifications"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Email Notifications</FormLabel>
+                          <FormDescription>
+                            Receive notifications via email
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="browserNotifications"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Browser Notifications</FormLabel>
+                          <FormDescription>
+                            Receive notifications in the browser
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="apiChangeNotifications"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">API Change Notifications</FormLabel>
+                          <FormDescription>
+                            Receive notifications about API changes
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setEditDialogOpen(false)}
+                  disabled={updateUserMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updateUserMutation.isPending}
+                >
+                  {updateUserMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                      Updating...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the user
+              account and all associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteUserMutation.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteUserMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
