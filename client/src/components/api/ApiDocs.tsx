@@ -575,6 +575,28 @@ X-API-Key: your-api-key-here`}
               </pre>
             </div>
             
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">API Key Restrictions</h4>
+              <p className="mt-2 text-sm text-gray-600">API keys have the following method and endpoint restrictions:</p>
+              
+              <div className="mt-3">
+                <h5 className="text-xs font-semibold text-gray-700">Allowed Methods and Endpoints:</h5>
+                <ul className="mt-2 list-disc list-inside space-y-1 text-sm text-gray-600">
+                  <li><strong>GET</strong>: All read-only endpoints (/api/events, /api/courses, /api/media, /api/training-sessions)</li>
+                  <li><strong>POST</strong>: Only the event participant registration endpoint (/api/events/{"{id}"}/participants)</li>
+                </ul>
+              </div>
+              
+              <div className="mt-3">
+                <h5 className="text-xs font-semibold text-gray-700">Restricted Operations:</h5>
+                <ul className="mt-2 list-disc list-inside space-y-1 text-sm text-gray-600">
+                  <li>All PUT, DELETE, and PATCH methods</li>
+                  <li>POST methods except for event participant registration</li>
+                </ul>
+                <p className="mt-2 text-xs text-gray-500 italic">Note: These restricted operations can only be performed using session-based authentication.</p>
+              </div>
+            </div>
+            
             <h4 className="text-md font-semibold mt-6">API Key Management Endpoints</h4>
             
             <div className="bg-gray-50 p-4 rounded-md mb-6">
@@ -679,6 +701,14 @@ X-API-Key: your-api-key-here`}
             <tr>
               <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">400 Bad Request</td>
               <td className="px-3 py-2 text-xs text-gray-700">The request was invalid or malformed.</td>
+            </tr>
+            <tr>
+              <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">401 Unauthorized</td>
+              <td className="px-3 py-2 text-xs text-gray-700">Authentication is required or API key is invalid/expired.</td>
+            </tr>
+            <tr>
+              <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">403 Forbidden</td>
+              <td className="px-3 py-2 text-xs text-gray-700">The API key doesn't have permission to access the requested resource or method.</td>
             </tr>
             <tr>
               <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">404 Not Found</td>
