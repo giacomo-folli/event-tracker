@@ -7,6 +7,7 @@ import Media from "@/pages/media";
 import EventView from "@/pages/event-view";
 import EventDetailsPage from "@/pages/event-details";
 import SharedEventPage from "@/pages/shared-event";
+import SharedCoursePage from "@/pages/shared-course";
 import CalendarPage from "@/pages/calendar";
 import UsersPage from "@/pages/users"; // Import the Users page
 import NotFound from "@/pages/not-found";
@@ -108,6 +109,9 @@ function AppRoutes() {
       
       {/* Shared event public route */}
       <Route path="/events/shared/:token" component={SharedEventPage} />
+      
+      {/* Shared course public route */}
+      <Route path="/courses/shared/:token" component={SharedCoursePage} />
       
       {/* All other routes require authentication */}
       <Route>
