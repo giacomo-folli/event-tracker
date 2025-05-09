@@ -53,7 +53,7 @@ import {
   Loader2, 
   UserPlus, 
   Trash2, 
-  Edit, 
+  Pencil, 
   Check, 
   X 
 } from "lucide-react";
@@ -104,7 +104,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
 
   // Fetch users
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<{users: User[]}>({
     queryKey: ['/api/users'],
     retry: false,
   });
