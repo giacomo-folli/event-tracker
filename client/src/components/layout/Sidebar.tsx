@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
-import { Calendar, Settings, Code, LogOut, GraduationCap, Image, CalendarDays } from "lucide-react";
+import { Calendar, Settings, Code, LogOut, GraduationCap, Image, CalendarDays, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "../../hooks";
 
@@ -102,6 +102,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             >
               <CalendarDays className="mr-3 h-5 w-5" />
               Training Calendar
+            </a>
+          </Link>
+
+          <Link href="/users">
+            <a 
+              onClick={handleNavClick}
+              className={cn(
+                "group flex items-center px-3 py-2 text-sm font-medium rounded-md",
+                location === "/users" 
+                  ? "bg-primary-50 text-primary"
+                  : "text-gray-600 hover:bg-gray-50"
+              )}
+            >
+              <Users className="mr-3 h-5 w-5" />
+              User Management
             </a>
           </Link>
 

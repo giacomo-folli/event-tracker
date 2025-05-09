@@ -287,6 +287,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch user" });
     }
   });
+  
+  // User management endpoints
+  app.get("/api/users", async (req: Request, res: Response) => {
+    try {
+      const users = await dbStorage.getAllUsers();
+      // Remove passwords from the response
+      const safeUsers = users.map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+      res.json({ users: safeUsers });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+  
+  app.post("/api/users", async (req: Request, res: Response) => {
+    try {
+      // Check if username already exists
+      const existingUser = await dbStorage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+      
+      // Create new user
+      const userData = {
+        username: req.body.username,
+        password: req.body.password || Math.random().toString(36).slice(-8), // Generate random password if not provided
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        emailNotifications: req.body.emailNotifications !== undefined ? req.body.emailNotifications : true,
+        browserNotifications: req.body.browserNotifications !== undefined ? req.body.browserNotifications : false,
+        apiChangeNotifications: req.body.apiChangeNotifications !== undefined ? req.body.apiChangeNotifications : true,
+      };
+      
+      const user = await dbStorage.createUser(userData);
+      
+      // Remove password from response
+      const { password, ...safeUser } = user;
+      
+      res.status(201).json({ user: safeUser });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  });
 
   app.put("/api/user/settings", async (req: Request, res: Response) => {
     try {
