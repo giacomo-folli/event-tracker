@@ -2,6 +2,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Course } from "@shared/schema";
 import { CourseForm } from "./CourseForm";
+import { useCourses } from "@/hooks/useCourses";
 
 import {
   Card,
@@ -17,6 +18,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -29,6 +31,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { 
   MoreVertical, 
@@ -36,7 +47,11 @@ import {
   Trash2, 
   GraduationCap, 
   Calendar, 
-  User 
+  User, 
+  Share2, 
+  Link, 
+  Copy, 
+  Link2Off 
 } from "lucide-react";
 
 interface CourseListProps {
@@ -46,8 +61,10 @@ interface CourseListProps {
 
 export function CourseList({ courses, onCourseChange }: CourseListProps) {
   const { toast } = useToast();
+  const { shareCourse } = useCourses();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
   const handleEditClick = (course: Course) => {
@@ -86,6 +103,34 @@ export function CourseList({ courses, onCourseChange }: CourseListProps) {
       });
     } finally {
       setIsDeleteAlertOpen(false);
+    }
+  };
+  
+  const handleShareClick = (course: Course) => {
+    setSelectedCourse(course);
+    setIsShareDialogOpen(true);
+  };
+  
+  const handleToggleShare = (course: Course) => {
+    shareCourse({ id: course.id, isShared: !course.isShared });
+  };
+  
+  const copyShareUrlToClipboard = () => {
+    if (selectedCourse?.shareUrl) {
+      navigator.clipboard.writeText(selectedCourse.shareUrl)
+        .then(() => {
+          toast({
+            title: "Link copied",
+            description: "Course share link copied to clipboard",
+          });
+        })
+        .catch(() => {
+          toast({
+            title: "Copy failed",
+            description: "Failed to copy link to clipboard",
+            variant: "destructive",
+          });
+        });
     }
   };
 
