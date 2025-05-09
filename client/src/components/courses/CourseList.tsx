@@ -164,14 +164,24 @@ export function CourseList({ courses, onCourseChange }: CourseListProps) {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    {course.level && (
-                      <Badge 
-                        variant={getLevelBadgeVariant(course.level) as any} 
-                        className="mb-2"
-                      >
-                        {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
-                      </Badge>
-                    )}
+                    <div className="flex space-x-2 mb-2">
+                      {course.level && (
+                        <Badge 
+                          variant={getLevelBadgeVariant(course.level) as any}
+                        >
+                          {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
+                        </Badge>
+                      )}
+                      {course.isShared && (
+                        <Badge 
+                          variant="outline" 
+                          className="bg-green-50 text-green-700 border-green-200"
+                        >
+                          <Share2 className="h-3 w-3 mr-1" />
+                          Shared
+                        </Badge>
+                      )}
+                    </div>
                     <CardTitle className="text-lg">{course.title}</CardTitle>
                   </div>
                   <DropdownMenu>
@@ -190,6 +200,24 @@ export function CourseList({ courses, onCourseChange }: CourseListProps) {
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {course.isShared ? (
+                        <>
+                          <DropdownMenuItem onClick={() => handleShareClick(course)}>
+                            <Share2 className="mr-2 h-4 w-4" />
+                            View share link
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleShare(course)}>
+                            <Link2Off className="mr-2 h-4 w-4" />
+                            Disable sharing
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <DropdownMenuItem onClick={() => handleToggleShare(course)}>
+                          <Share2 className="mr-2 h-4 w-4" />
+                          Enable sharing
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -259,6 +287,40 @@ export function CourseList({ courses, onCourseChange }: CourseListProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Course share link</DialogTitle>
+            <DialogDescription>
+              Anyone with this link can view and register for the course without logging in.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 mt-2">
+            <div className="grid flex-1 gap-2">
+              <Input
+                readOnly
+                value={selectedCourse?.shareUrl || ''}
+                className="font-mono text-sm"
+              />
+            </div>
+            <Button onClick={copyShareUrlToClipboard} type="button" size="icon" className="h-9 w-9">
+              <Copy className="h-4 w-4" />
+              <span className="sr-only">Copy</span>
+            </Button>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleToggleShare(selectedCourse!)}
+              className="w-full sm:w-auto"
+            >
+              <Link2Off className="mr-2 h-4 w-4" />
+              Disable sharing
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
