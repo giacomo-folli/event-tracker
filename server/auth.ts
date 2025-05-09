@@ -80,8 +80,13 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Authentication routes
-  app.post("/api/register", async (req, res, next) => {
+  // User management routes - require authentication
+  app.post("/api/users", async (req, res, next) => {
+    // Only allow authenticated users to create new users
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required to create users" });
+    }
+
     try {
       const { username, password, firstName, lastName, email } = req.body;
       
@@ -92,7 +97,7 @@ export async function setupAuth(app: Express) {
       }
 
       // Hash password
-      const hashedPassword = await hashPassword(password);
+      const hashedPassword = await hashPassword(password || 'temp_password');
       
       // Create user
       const user = await storage.createUser({
@@ -105,18 +110,34 @@ export async function setupAuth(app: Express) {
         browserNotifications: false,
         apiChangeNotifications: false,
       });
-
-      // Log in the new user
-      req.login(user, (err) => {
-        if (err) return next(err);
-        
-        // Don't send password back to client
-        const { password, ...safeUser } = user;
-        res.status(201).json({ user: safeUser });
-      });
+      
+      // Don't send password back to client
+      const { password: _, ...safeUser } = user;
+      res.status(201).json({ user: safeUser });
     } catch (error) {
-      console.error("Registration error:", error);
-      res.status(500).json({ error: "Failed to register user" });
+      console.error("User creation error:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  });
+
+  // Get all users - requires authentication
+  app.get("/api/users", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      const users = await storage.getAllUsers();
+      // Remove passwords from response
+      const safeUsers = users.map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+      
+      return res.json({ users: safeUsers });
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return res.status(500).json({ error: "Failed to fetch users" });
     }
   });
 
