@@ -265,6 +265,9 @@ export const updateCourseSchema = createInsertSchema(courses)
     instructor: true,
     level: true,
     duration: true,
+    isShared: true,
+    shareToken: true,
+    shareUrl: true
   })
   .extend({
     startDate: z.coerce.date().optional(),

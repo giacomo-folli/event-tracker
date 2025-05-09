@@ -156,7 +156,10 @@ export class DatabaseStorage implements IStorage {
       creatorId: courses.creatorId,
       instructor: courses.instructor,
       level: courses.level,
-      duration: courses.duration
+      duration: courses.duration,
+      isShared: courses.isShared,
+      shareToken: courses.shareToken,
+      shareUrl: courses.shareUrl
     }).from(courses);
   }
   
@@ -169,8 +172,33 @@ export class DatabaseStorage implements IStorage {
       creatorId: courses.creatorId,
       instructor: courses.instructor,
       level: courses.level,
-      duration: courses.duration
+      duration: courses.duration,
+      isShared: courses.isShared,
+      shareToken: courses.shareToken,
+      shareUrl: courses.shareUrl
     }).from(courses).where(eq(courses.id, id));
+    return course || undefined;
+  }
+  
+  async getCourseByToken(token: string): Promise<Course | undefined> {
+    const [course] = await db.select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      startDate: courses.startDate,
+      creatorId: courses.creatorId,
+      instructor: courses.instructor,
+      level: courses.level,
+      duration: courses.duration,
+      isShared: courses.isShared,
+      shareToken: courses.shareToken,
+      shareUrl: courses.shareUrl
+    }).from(courses).where(
+      and(
+        eq(courses.shareToken, token),
+        eq(courses.isShared, true)
+      )
+    );
     return course || undefined;
   }
   
