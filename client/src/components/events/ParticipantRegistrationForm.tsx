@@ -52,52 +52,53 @@ export default function ParticipantRegistrationForm({
 
   if (success) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Registration Successful!</CardTitle>
-          <CardDescription>
+      <div className="w-full py-4">
+        <div className="text-center">
+          <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-5">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Registration Successful!</h3>
+          <p className="text-gray-600 mb-2">
             Thank you for registering for <span className="font-semibold">{eventTitle}</span>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
+          </p>
+          <p className="text-sm text-gray-500 mb-6">
             An email with the event details has been sent to your inbox.
           </p>
-        </CardContent>
-        <CardFooter>
+          
           <Button 
             variant="outline" 
             onClick={() => setSuccess(false)}
-            className="w-full"
+            className="w-full h-11 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
           >
             Register another participant
           </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Register for this Event</CardTitle>
-        <CardDescription>
-          Fill out the form below to register for <span className="font-semibold">{eventTitle}</span>
-        </CardDescription>
-      </CardHeader>
+    <div className="w-full">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-5">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel className="text-sm font-medium text-gray-700">Email Address</FormLabel>
                   <FormControl>
-                    <Input placeholder="your.email@example.com" {...field} />
+                    <Input 
+                      placeholder="your.email@example.com" 
+                      {...field} 
+                      className="h-11 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
@@ -106,31 +107,42 @@ export default function ParticipantRegistrationForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (Optional)</FormLabel>
+                  <FormLabel className="text-sm font-medium text-gray-700">
+                    Full Name <span className="text-gray-400 font-normal">(Optional)</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="Your name" {...field} />
+                    <Input 
+                      placeholder="Your name" 
+                      {...field}
+                      className="h-11 rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500" 
+                    />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
-          </CardContent>
-          <CardFooter>
+          </div>
+          
+          <div className="pt-2">
             <Button 
               type="submit" 
-              className="w-full"
+              className="w-full h-11 text-base font-medium bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200"
               disabled={isRegistering}
             >
               {isRegistering ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Registering...
                 </>
-              ) : "Register Now"}
+              ) : "Complete Registration"}
             </Button>
-          </CardFooter>
+          </div>
+          
+          <p className="text-xs text-center text-gray-500 pt-2">
+            By registering, you'll receive event updates and information via email
+          </p>
         </form>
       </Form>
-    </Card>
+    </div>
   );
 }

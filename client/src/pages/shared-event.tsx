@@ -92,119 +92,131 @@ export default function SharedEventPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <Card className="shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-2xl font-bold">{event.title}</CardTitle>
-                  <CardDescription className="text-blue-100 mt-2">
-                    Shared Event
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="pt-6 space-y-6">
-              {event.description && (
-                <div>
-                  <h3 className="text-lg font-medium">Description</h3>
-                  <p className="mt-2 text-gray-700">{event.description}</p>
-                </div>
-              )}
-              
-              <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                <div className="flex items-start">
-                  <Calendar className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Date</h4>
-                    <p className="mt-1 font-medium">{formatDate(new Date(event.startDate))}</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <Clock className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500">Time</h4>
-                    <p className="mt-1">
-                      {formatTime(new Date(event.startDate))} - {formatTime(new Date(event.endDate))}
-                    </p>
-                  </div>
-                </div>
-                
-                {event.location && (
-                  <div className="flex items-start">
-                    <MapPin className="h-5 w-5 text-gray-400 mr-3 mt-0.5" />
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500">Location</h4>
-                      <p className="mt-1">{event.location}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Event Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl mb-2">
+            {event.title}
+          </h1>
+          <Badge variant="secondary" className="text-sm font-medium px-3 py-1">
+            Shared Event
+          </Badge>
         </div>
         
-        <div className="md:col-span-1">
-          <Card className="shadow-md h-full">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-medium">Registration</CardTitle>
-              <CardDescription>Sign up to attend this event</CardDescription>
-            </CardHeader>
-            
-            <CardContent>
-              {registrationSuccess ? (
-                <div className="text-center py-6">
-                  <div className="h-12 w-12 bg-green-100 text-green-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Event Details - Takes up 3/5 of the space on large screens */}
+          <div className="lg:col-span-3">
+            <Card className="shadow-lg overflow-hidden border-none">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pb-6">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-2xl font-bold">Event Details</CardTitle>
+                </div>
+              </CardHeader>
+              
+              <CardContent className="pt-6 space-y-6">
+                {event.description && (
+                  <div>
+                    <h3 className="text-lg font-medium border-b border-gray-200 pb-2 mb-3">Description</h3>
+                    <p className="text-gray-700 leading-relaxed">{event.description}</p>
                   </div>
-                  <h3 className="text-lg font-medium mb-2">Registration Successful!</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Thank you for registering for this event. You'll receive updates via email.
-                  </p>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setRegistrationSuccess(false)}
-                    className="w-full"
-                  >
-                    Register another person
-                  </Button>
+                )}
+                
+                <div className="bg-gray-50 p-5 rounded-lg space-y-5 border border-gray-100">
+                  <div className="flex items-start">
+                    <Calendar className="h-6 w-6 text-blue-500 mr-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Date</h4>
+                      <p className="mt-1 font-medium text-gray-900">{formatDate(new Date(event.startDate))}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <Clock className="h-6 w-6 text-blue-500 mr-4 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Time</h4>
+                      <p className="mt-1 text-gray-900">
+                        {formatTime(new Date(event.startDate))} - {formatTime(new Date(event.endDate))}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {event.location && (
+                    <div className="flex items-start">
+                      <MapPin className="h-6 w-6 text-blue-500 mr-4 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Location</h4>
+                        <p className="mt-1 text-gray-900">{event.location}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : showRegistrationForm ? (
-                <ParticipantRegistrationForm 
-                  eventId={event.id}
-                  eventTitle={event.title}
-                  onSuccessfulRegistration={() => {
-                    toast({
-                      title: "Success!",
-                      description: "You have successfully registered for this event.",
-                    });
-                    setRegistrationSuccess(true);
-                    setShowRegistrationForm(false);
-                  }}
-                />
-              ) : (
-                <div className="text-center py-6">
-                  <UserPlus className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Join this event</h3>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Register now to attend and receive updates about this event.
-                  </p>
-                  <Button 
-                    onClick={() => setShowRegistrationForm(true)}
-                    className="w-full"
-                  >
-                    Register Now
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* Registration Form - Takes up 2/5 of the space on large screens */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-lg h-full border-none">
+              <CardHeader className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+                <CardTitle className="text-xl font-bold">Registration</CardTitle>
+                <CardDescription className="text-indigo-100 mt-1">
+                  Sign up to attend this event
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pt-6">
+                {registrationSuccess ? (
+                  <div className="text-center py-8">
+                    <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-medium mb-3">Registration Successful!</h3>
+                    <p className="text-gray-600 mb-6">
+                      Thank you for registering for this event. You'll receive updates via email.
+                    </p>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setRegistrationSuccess(false)}
+                      className="w-full"
+                    >
+                      Register another person
+                    </Button>
+                  </div>
+                ) : showRegistrationForm ? (
+                  <ParticipantRegistrationForm 
+                    eventId={event.id}
+                    eventTitle={event.title}
+                    onSuccessfulRegistration={() => {
+                      toast({
+                        title: "Success!",
+                        description: "You have successfully registered for this event.",
+                      });
+                      setRegistrationSuccess(true);
+                      setShowRegistrationForm(false);
+                    }}
+                  />
+                ) : (
+                  <div className="text-center py-8">
+                    <UserPlus className="h-16 w-16 mx-auto text-indigo-500 mb-4" />
+                    <h3 className="text-xl font-medium mb-3">Join this event</h3>
+                    <p className="text-gray-600 mb-6">
+                      Register now to attend and receive updates about this event.
+                    </p>
+                    <Button 
+                      onClick={() => setShowRegistrationForm(true)}
+                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                    >
+                      Register Now
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
