@@ -335,6 +335,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to create user" });
     }
   });
+  
+  app.put("/api/users/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      // Check if user exists
+      const existingUser = await dbStorage.getUser(id);
+      if (!existingUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // If username is changing, check if new username is available
+      if (req.body.username && req.body.username !== existingUser.username) {
+        const usernameExists = await dbStorage.getUserByUsername(req.body.username);
+        if (usernameExists) {
+          return res.status(400).json({ error: "Username already exists" });
+        }
+      }
+      
+      // Update user settings
+      const userData = {
+        firstName: req.body.firstName || existingUser.firstName,
+        lastName: req.body.lastName || existingUser.lastName,
+        email: req.body.email || existingUser.email,
+        emailNotifications: req.body.emailNotifications !== undefined 
+          ? req.body.emailNotifications 
+          : existingUser.emailNotifications,
+        browserNotifications: req.body.browserNotifications !== undefined 
+          ? req.body.browserNotifications 
+          : existingUser.browserNotifications,
+        apiChangeNotifications: req.body.apiChangeNotifications !== undefined 
+          ? req.body.apiChangeNotifications 
+          : existingUser.apiChangeNotifications,
+      };
+      
+      // Only update password if provided
+      if (req.body.password) {
+        userData.password = req.body.password;
+      }
+      
+      const updatedUser = await dbStorage.updateUserSettings(id, userData);
+      
+      // Remove password from response
+      const { password, ...safeUser } = updatedUser;
+      
+      res.json({ user: safeUser });
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+  
+  app.delete("/api/users/:id", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+      
+      // For security reasons, prevent deletion of user ID 1 (admin)
+      if (id === 1) {
+        return res.status(403).json({ error: "Cannot delete the admin user" });
+      }
+      
+      // Add method to delete user (needs to be implemented in storage)
+      const success = await dbStorage.deleteUser(id);
+      
+      if (!success) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
 
   app.put("/api/user/settings", async (req: Request, res: Response) => {
     try {

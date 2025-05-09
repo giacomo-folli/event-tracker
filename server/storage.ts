@@ -23,6 +23,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   createUser(user: InsertUser): Promise<User>;
   updateUserSettings(id: number, settings: UpdateUserSettings): Promise<User | undefined>;
+  deleteUser(id: number): Promise<boolean>;
   
   // Event methods
   getEvents(): Promise<Event[]>;
@@ -228,6 +229,10 @@ export class MemStorage implements IStorage {
     const updatedUser = { ...user, ...settings };
     this.users.set(id, updatedUser);
     return updatedUser;
+  }
+  
+  async deleteUser(id: number): Promise<boolean> {
+    return this.users.delete(id);
   }
   
   // Event methods

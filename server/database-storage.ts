@@ -60,6 +60,14 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
   
+  async deleteUser(id: number): Promise<boolean> {
+    const result = await db
+      .delete(users)
+      .where(eq(users.id, id))
+      .returning();
+    return result.length > 0;
+  }
+  
   // Event methods
   async getEvents(): Promise<Event[]> {
     return await db.select({

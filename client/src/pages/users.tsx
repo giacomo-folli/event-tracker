@@ -26,6 +26,17 @@ import {
   DialogHeader, 
   DialogTitle 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
@@ -36,7 +47,14 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Loader2, UserPlus } from "lucide-react";
+import { 
+  Loader2, 
+  UserPlus, 
+  Trash2, 
+  Edit, 
+  Check, 
+  X 
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
@@ -49,7 +67,20 @@ const createUserSchema = z.object({
   password: z.string().optional(),
 });
 
+// Form schema for updating a user
+const updateUserSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Please enter a valid email"),
+  password: z.string().optional(),
+  emailNotifications: z.boolean().default(true),
+  browserNotifications: z.boolean().default(false),
+  apiChangeNotifications: z.boolean().default(true),
+});
+
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
+type UpdateUserFormValues = z.infer<typeof updateUserSchema>;
 
 interface User {
   id: number;
@@ -63,7 +94,10 @@ interface User {
 }
 
 export default function UsersPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -73,6 +107,7 @@ export default function UsersPage() {
     retry: false,
   });
 
+  // Create user mutation
   // Create user mutation
   const createUserMutation = useMutation({
     mutationFn: async (userData: CreateUserFormValues) => {
@@ -88,14 +123,72 @@ export default function UsersPage() {
         title: "User created",
         description: "The user has been created successfully.",
       });
-      setDialogOpen(false);
-      form.reset();
+      setCreateDialogOpen(false);
+      createForm.reset();
       // Invalidate users query to refetch the list
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
     },
     onError: (error: Error) => {
       toast({
         title: "Failed to create user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Update user mutation
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: UpdateUserFormValues }) => {
+      const res = await apiRequest("PUT", `/api/users/${id}`, data);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update user");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "User updated",
+        description: "The user has been updated successfully.",
+      });
+      setEditDialogOpen(false);
+      setSelectedUser(null);
+      // Invalidate users query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/users/${id}`);
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to delete user");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "User deleted",
+        description: "The user has been deleted successfully.",
+      });
+      setDeleteDialogOpen(false);
+      setSelectedUser(null);
+      // Invalidate users query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to delete user",
         description: error.message,
         variant: "destructive",
       });
