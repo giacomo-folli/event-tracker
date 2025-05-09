@@ -14,6 +14,7 @@ export function ApiDocs() {
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="courses">Courses</TabsTrigger>
             <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="trainingSessions">Training Sessions</TabsTrigger>
             <TabsTrigger value="user">User</TabsTrigger>
             <TabsTrigger value="authentication">Authentication</TabsTrigger>
           </TabsList>
@@ -138,7 +139,8 @@ export function ApiDocs() {
                 <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">DELETE</Badge>
                 <code className="ml-2 text-sm text-gray-800">/api/events/{"{id}"}</code>
               </div>
-              <p className="mt-2 text-sm text-gray-600">Deletes an event.</p>
+              <p className="mt-2 text-sm text-gray-600">Deletes an event permanently.</p>
+              <p className="mt-1 text-xs text-gray-500">Returns a 200 status code on successful deletion with a success: true response.</p>
             </div>
           </TabsContent>
           
@@ -202,7 +204,8 @@ export function ApiDocs() {
                 <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">DELETE</Badge>
                 <code className="ml-2 text-sm text-gray-800">/api/courses/{"{id}"}</code>
               </div>
-              <p className="mt-2 text-sm text-gray-600">Deletes a course.</p>
+              <p className="mt-2 text-sm text-gray-600">Deletes a course permanently.</p>
+              <p className="mt-1 text-xs text-gray-500">Returns a 200 status code on successful deletion.</p>
             </div>
             
             <div className="bg-gray-50 p-4 rounded-md mb-6">
@@ -257,6 +260,94 @@ export function ApiDocs() {
 }`}
                 </pre>
               </div>
+            </div>
+          </TabsContent>
+          
+          {/* TRAINING SESSIONS ENDPOINTS */}
+          <TabsContent value="trainingSessions">
+            <h3>Training Sessions API Endpoints</h3>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Get All Training Sessions</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">GET</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/training-sessions</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Returns a list of all training sessions.</p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Get Training Sessions by Month</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">GET</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/training-sessions/month/{"{year}"}/{"{month}"}</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Returns all training sessions for a specific month and year.</p>
+              
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-gray-700">Parameters:</h5>
+                <table className="mt-2 min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Description</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    <tr>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">year</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">integer</td>
+                      <td className="px-3 py-2 text-xs text-gray-700">Year (e.g., 2025)</td>
+                    </tr>
+                    <tr>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">month</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-gray-700">integer</td>
+                      <td className="px-3 py-2 text-xs text-gray-700">Month (1-12)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Get Single Training Session</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100">GET</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/training-sessions/{"{id}"}</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Returns details for a specific training session.</p>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Create Training Session</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100">POST</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/training-sessions</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Creates a new training session.</p>
+              
+              <div className="mt-4">
+                <h5 className="text-xs font-semibold text-gray-700">Request Body:</h5>
+                <pre className="mt-2 bg-gray-800 text-green-300 p-4 rounded-md overflow-x-auto text-xs">
+{`{
+  "date": "2025-05-15T00:00:00.000Z",
+  "courseId": 1,
+  "hour": 14,
+  "minute": 30
+}`}
+                </pre>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 p-4 rounded-md mb-6">
+              <h4 className="text-sm font-semibold text-gray-900">Delete Training Session</h4>
+              <div className="mt-2 flex items-center">
+                <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">DELETE</Badge>
+                <code className="ml-2 text-sm text-gray-800">/api/training-sessions/{"{id}"}</code>
+              </div>
+              <p className="mt-2 text-sm text-gray-600">Deletes a training session.</p>
+              <p className="mt-1 text-xs text-gray-500">Returns a 200 status code on successful deletion.</p>
             </div>
           </TabsContent>
           
@@ -352,7 +443,8 @@ export function ApiDocs() {
                 <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100">DELETE</Badge>
                 <code className="ml-2 text-sm text-gray-800">/api/media/{"{id}"}</code>
               </div>
-              <p className="mt-2 text-sm text-gray-600">Deletes a media item and its file.</p>
+              <p className="mt-2 text-sm text-gray-600">Deletes a media item and its file permanently.</p>
+              <p className="mt-1 text-xs text-gray-500">Returns a 200 status code on successful deletion.</p>
             </div>
             
             <div className="bg-gray-50 p-4 rounded-md mb-6">
