@@ -1,16 +1,14 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useLocation } from "wouter";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../hooks";
-import { useToast } from "@/hooks/use-toast";
 
 // Login form schema
 const loginSchema = z.object({
@@ -18,26 +16,14 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// Registration form schema with additional validation
-const registrationSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Please enter a valid email"),
-});
-
 type LoginFormValues = z.infer<typeof loginSchema>;
-type RegistrationFormValues = z.infer<typeof registrationSchema>;
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<string>("login");
   const [_, setLocation] = useLocation();
-  const { toast } = useToast();
   
-  // Use the real auth context
+  // Use the auth context
   const auth = useAuth();
-  const { user, loginMutation, registerMutation } = auth;
+  const { user, loginMutation } = auth;
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
@@ -55,21 +41,8 @@ export default function AuthPage() {
     },
   });
 
-  // Handle registration form
-  const registerForm = useForm<RegistrationFormValues>({
-    resolver: zodResolver(registrationSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-      email: "",
-    },
-  });
-
   // Loading states from mutations
   const isLoginLoading = loginMutation.isPending;
-  const isRegisterLoading = registerMutation.isPending;
 
   // Handle login submission
   const handleLogin = async (data: LoginFormValues) => {
@@ -77,24 +50,10 @@ export default function AuthPage() {
       onSuccess: () => {
         // Redirect handled by AuthProvider
       },
-      onError: (error) => {
+      onError: () => {
         // Display error toast - already handled by AuthProvider
         // Reset the password field to allow user to try again
         loginForm.setValue("password", "");
-      }
-    });
-  };
-
-  // Handle registration submission
-  const handleRegister = async (data: RegistrationFormValues) => {
-    registerMutation.mutate(data, {
-      onSuccess: () => {
-        // Redirect handled by AuthProvider
-      },
-      onError: (error) => {
-        // Error toast already handled by AuthProvider
-        // Reset password only, keep other fields for correction
-        registerForm.setValue("password", "");
       }
     });
   };
@@ -175,211 +134,76 @@ export default function AuthPage() {
             </div>
           </div>
 
-          {/* Auth forms */}
+          {/* Auth form */}
           <div className="w-full max-w-md space-y-8 order-1 md:order-2">
             <Card className="w-full">
               <CardHeader>
                 <CardTitle className="text-2xl">Authentication</CardTitle>
                 <CardDescription>
-                  Sign in to your account or create a new one
+                  Sign in to your account to access the dashboard
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Tabs
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Register</TabsTrigger>
-                  </TabsList>
-                  
-                  {/* Login Tab */}
-                  <TabsContent value="login">
-                    <div className="space-y-4 py-2">
-                      <Form {...loginForm}>
-                        <form
-                          onSubmit={loginForm.handleSubmit(handleLogin)}
-                          className="space-y-4"
-                        >
-                          <FormField
-                            control={loginForm.control}
-                            name="username"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Enter your username"
-                                    {...field}
-                                    disabled={isLoginLoading}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={loginForm.control}
-                            name="password"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="password"
-                                    placeholder="Enter your password"
-                                    {...field}
-                                    disabled={isLoginLoading}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={isLoginLoading}
-                          >
-                            {isLoginLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                                Logging in...
-                              </>
-                            ) : (
-                              "Login"
-                            )}
-                          </Button>
-                        </form>
-                      </Form>
-                    </div>
-                  </TabsContent>
-                  
-                  {/* Register Tab */}
-                  <TabsContent value="register">
-                    <div className="space-y-4 py-2">
-                      <Form {...registerForm}>
-                        <form
-                          onSubmit={registerForm.handleSubmit(handleRegister)}
-                          className="space-y-4"
-                        >
-                          <div className="grid grid-cols-2 gap-4">
-                            <FormField
-                              control={registerForm.control}
-                              name="firstName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>First Name</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="John"
-                                      {...field}
-                                      disabled={isRegisterLoading}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            
-                            <FormField
-                              control={registerForm.control}
-                              name="lastName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Last Name</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="Doe"
-                                      {...field}
-                                      disabled={isRegisterLoading}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="email"
-                                    placeholder="john.doe@example.com"
-                                    {...field}
-                                    disabled={isRegisterLoading}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="username"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Username</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="johndoe"
-                                    {...field}
-                                    disabled={isRegisterLoading}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <FormField
-                            control={registerForm.control}
-                            name="password"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Password</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="password"
-                                    placeholder="Create a password"
-                                    {...field}
-                                    disabled={isRegisterLoading}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          
-                          <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={isRegisterLoading}
-                          >
-                            {isRegisterLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
-                                Creating account...
-                              </>
-                            ) : (
-                              "Create Account"
-                            )}
-                          </Button>
-                        </form>
-                      </Form>
-                    </div>
-                  </TabsContent>
-                </Tabs>
+                <div className="space-y-4 py-2">
+                  <Form {...loginForm}>
+                    <form
+                      onSubmit={loginForm.handleSubmit(handleLogin)}
+                      className="space-y-4"
+                    >
+                      <FormField
+                        control={loginForm.control}
+                        name="username"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Username</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter your username"
+                                {...field}
+                                disabled={isLoginLoading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={loginForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="password"
+                                placeholder="Enter your password"
+                                {...field}
+                                disabled={isLoginLoading}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button
+                        type="submit"
+                        className="w-full"
+                        disabled={isLoginLoading}
+                      >
+                        {isLoginLoading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+                            Logging in...
+                          </>
+                        ) : (
+                          "Login"
+                        )}
+                      </Button>
+                    </form>
+                  </Form>
+                </div>
               </CardContent>
             </Card>
           </div>
