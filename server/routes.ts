@@ -2,7 +2,23 @@ import express, { type Express, type Request, type Response, type NextFunction }
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage as dbStorage } from "./storage";
-import { updateEventSchema, insertEventSchema, updateUserSettingsSchema, passwordUpdateSchema, insertCourseSchema, updateCourseSchema, insertMediaSchema, updateMediaSchema, insertCourseMediaSchema, insertEventParticipantSchema, eventParticipantFormSchema, updateEventSharingSchema, insertTrainingSessionSchema, insertCourseParticipantSchema } from "@shared/schema";
+import { 
+  updateEventSchema, 
+  insertEventSchema, 
+  updateUserSettingsSchema, 
+  passwordUpdateSchema, 
+  insertCourseSchema, 
+  updateCourseSchema, 
+  insertMediaSchema, 
+  updateMediaSchema, 
+  insertCourseMediaSchema, 
+  insertEventParticipantSchema, 
+  eventParticipantFormSchema, 
+  updateEventSharingSchema, 
+  updateCourseSharingSchema, 
+  insertTrainingSessionSchema, 
+  insertCourseParticipantSchema 
+} from "@shared/schema";
 import { join } from "path";
 import * as fs from "fs";
 import multer from "multer";
@@ -542,6 +558,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ course: updatedCourse });
     } catch (error) {
       res.status(500).json({ error: "Failed to update course" });
+    }
+  });
+  
+  // Endpoint to toggle course sharing
+  app.put("/api/courses/:id/share", async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+      
+      // Get current course
+      const course = await dbStorage.getCourse(id);
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+      
+      // Toggle sharing status
+      const isShared = req.body.isShared === true;
+      
+      let shareToken = course.shareToken;
+      let shareUrl = course.shareUrl;
+      
+      // If we're enabling sharing and there's no token yet, generate one
+      if (isShared && !shareToken) {
+        shareToken = generateShareToken();
+        shareUrl = generateShareUrl(shareToken, 'courses');
+      }
+      
+      const updateData = {
+        ...course,
+        isShared,
+        shareToken,
+        shareUrl
+      };
+      
+      const updatedCourse = await dbStorage.updateCourse(id, updateData);
+      
+      if (!updatedCourse) {
+        return res.status(404).json({ error: "Failed to update course sharing status" });
+      }
+      
+      res.json({ course: updatedCourse });
+    } catch (error) {
+      console.error("Error toggling course sharing:", error);
+      res.status(500).json({ error: "Failed to update course sharing status" });
+    }
+  });
+  
+  // Public endpoint to get a shared course by token (no authentication required)
+  app.get("/api/courses/shared/:token", async (req: Request, res: Response) => {
+    try {
+      const token = req.params.token;
+      if (!token) {
+        return res.status(400).json({ error: "Invalid share token" });
+      }
+      
+      // Find course by token 
+      const course = await dbStorage.getCourseByToken(token);
+      
+      if (!course || !course.isShared) {
+        return res.status(404).json({ error: "Shared course not found" });
+      }
+      
+      res.json({ course });
+    } catch (error) {
+      console.error("Error getting shared course:", error);
+      res.status(500).json({ error: "Failed to get shared course" });
     }
   });
 

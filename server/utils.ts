@@ -12,9 +12,10 @@ export function generateShareToken(): string {
 /**
  * Generates a share URL based on the token
  * @param token The share token
+ * @param type The type of resource being shared (default: 'events')
  * @returns The full share URL
  */
-export function generateShareUrl(token: string): string {
+export function generateShareUrl(token: string, type: 'events' | 'courses' = 'events'): string {
   // Using client-side path format for easier integration with frontend routing
-  return `/events/shared/${token}`;
+  return `/${type}/shared/${token}`;
 }

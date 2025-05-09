@@ -36,6 +36,7 @@ export interface IStorage {
   // Course methods
   getCourses(): Promise<Course[]>;
   getCourse(id: number): Promise<Course | undefined>;
+  getCourseByToken(token: string): Promise<Course | undefined>;
   createCourse(course: InsertCourse): Promise<Course>;
   updateCourse(id: number, course: UpdateCourse): Promise<Course | undefined>;
   deleteCourse(id: number): Promise<boolean>;
@@ -277,6 +278,12 @@ export class MemStorage implements IStorage {
   
   async getCourse(id: number): Promise<Course | undefined> {
     return this.courses.get(id);
+  }
+  
+  async getCourseByToken(token: string): Promise<Course | undefined> {
+    return Array.from(this.courses.values()).find(
+      (course) => course.shareToken === token && course.isShared === true
+    );
   }
   
   async createCourse(insertCourse: InsertCourse): Promise<Course> {
