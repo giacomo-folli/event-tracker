@@ -1,23 +1,18 @@
-import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage as dbStorage } from "./storage";
-import { 
-  updateEventSchema, 
-  insertEventSchema, 
-  updateUserSettingsSchema, 
-  passwordUpdateSchema, 
-  insertCourseSchema, 
-  updateCourseSchema, 
-  insertMediaSchema, 
-  updateMediaSchema, 
-  insertCourseMediaSchema, 
-  insertEventParticipantSchema, 
-  eventParticipantFormSchema, 
-  updateEventSharingSchema, 
-  updateCourseSharingSchema, 
-  insertTrainingSessionSchema, 
-  insertCourseParticipantSchema 
+import {
+  updateEventSchema,
+  insertEventSchema,
+  updateUserSettingsSchema,
+  passwordUpdateSchema,
+  insertCourseSchema,
+  updateCourseSchema,
+  updateMediaSchema,
+  eventParticipantFormSchema,
+  insertTrainingSessionSchema,
+  insertCourseParticipantSchema,
 } from "@shared/schema";
 import { join } from "path";
 import * as fs from "fs";
@@ -29,18 +24,70 @@ import { apiKeyAuth } from "./middleware/api-key-auth";
 import apiKeysRouter from "./routes/api-keys";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create a default admin user for database initialization
+  // This route MUST be defined BEFORE authentication middleware to be public
+  app.post("/api/init-admin", async (req: Request, res: Response) => {
+    try {
+      // Check if admin already exists
+      const existingUser = await dbStorage.getUserByUsername("admin");
+      if (existingUser) {
+        return res.json({
+          message: "Admin user already exists",
+          user: existingUser,
+        });
+      }
+
+      // Create default admin user with data from request body or fallback to defaults
+      const userData = {
+        username: req.body.username || "admin",
+        password: req.body.password || "password", // In a real app, ensure this is securely handled
+        firstName: req.body.firstName || "John",
+        lastName: req.body.lastName || "Doe",
+        email: req.body.email || "john.doe@example.com",
+        emailNotifications:
+          req.body.emailNotifications !== undefined
+            ? req.body.emailNotifications
+            : true,
+        browserNotifications:
+          req.body.browserNotifications !== undefined
+            ? req.body.browserNotifications
+            : false,
+        apiChangeNotifications:
+          req.body.apiChangeNotifications !== undefined
+            ? req.body.apiChangeNotifications
+            : true,
+      };
+
+      const user = await dbStorage.createUser(userData);
+
+      res.status(201).json({ message: "Admin user created", user });
+    } catch (error: any) {
+      console.error("Detailed error in /api/init-admin:", error);
+      if (error && error.message) {
+        console.error("Error message:", error.message);
+      }
+      if (error && error.stack) {
+        console.error("Error stack:", error.stack);
+      }
+      res.status(500).json({
+        error: "Failed to create admin user",
+        details: error.message || "No specific error message available",
+      });
+    }
+  });
+
   // Setup authentication (session-based)
   await setupAuth(app);
-  
+
   // Setup API key authentication
   app.use(apiKeyAuth);
-  
+
   // Setup upload directory for media files
-  const uploadDir = join(process.cwd(), 'uploads');
+  const uploadDir = join(process.cwd(), "uploads");
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
   }
-  
+
   // Configure multer for file uploads
   const multerStorage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -48,13 +95,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
     filename: function (req, file, cb) {
       // Generate a unique filename with original extension
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const ext = file.originalname.split('.').pop();
-      cb(null, uniqueSuffix + '.' + ext);
-    }
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = file.originalname.split(".").pop();
+      cb(null, uniqueSuffix + "." + ext);
+    },
   });
-  
-  const upload = multer({ 
+
+  const upload = multer({
     storage: multerStorage,
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB max file size
@@ -63,51 +110,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Accept images, videos, documents, and audio
       const mimeTypes = [
         // Images
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
         // Videos
-        'video/mp4', 'video/mpeg', 'video/quicktime',
+        "video/mp4",
+        "video/mpeg",
+        "video/quicktime",
         // Documents
-        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         // Audio
-        'audio/mpeg', 'audio/wav', 'audio/ogg'
+        "audio/mpeg",
+        "audio/wav",
+        "audio/ogg",
       ];
-      
+
       if (mimeTypes.includes(file.mimetype)) {
         cb(null, true);
       } else {
-        cb(new Error('Invalid file type. Only images, videos, documents, and audio files are allowed.'));
+        cb(
+          new Error(
+            "Invalid file type. Only images, videos, documents, and audio files are allowed."
+          )
+        );
       }
-    }
+    },
   });
-  // Create a default admin user for database initialization
-  app.post("/api/init-admin", async (req: Request, res: Response) => {
-    try {
-      // Check if admin already exists
-      const existingUser = await dbStorage.getUserByUsername("admin");
-      if (existingUser) {
-        return res.json({ message: "Admin user already exists", user: existingUser });
-      }
 
-      // Create default admin user with data from request body or fallback to defaults
-      const userData = {
-        username: req.body.username || "admin",
-        password: req.body.password || "password",
-        firstName: req.body.firstName || "John",
-        lastName: req.body.lastName || "Doe",
-        email: req.body.email || "john.doe@example.com",
-        emailNotifications: req.body.emailNotifications !== undefined ? req.body.emailNotifications : true,
-        browserNotifications: req.body.browserNotifications !== undefined ? req.body.browserNotifications : false,
-        apiChangeNotifications: req.body.apiChangeNotifications !== undefined ? req.body.apiChangeNotifications : true,
-      };
-      
-      const user = await dbStorage.createUser(userData);
-      
-      res.status(201).json({ message: "Admin user created", user });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to create admin user" });
-    }
-  });
-  
   // REST endpoints for events
   app.get("/api/events", async (req: Request, res: Response) => {
     try {
@@ -186,24 +218,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/events/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid event ID" });
       }
-      
+
       const success = await dbStorage.deleteEvent(id);
-      
+
       if (!success) {
         return res.status(404).json({ error: "Event not found" });
       }
-      
+
       res.status(200).json({ success });
     } catch (error) {
       console.error("Error deleting event:", error);
       res.status(500).json({ error: "Failed to delete event" });
     }
   });
-  
+
   // Endpoint to toggle event sharing
   app.put("/api/events/:id/share", async (req: Request, res: Response) => {
     try {
@@ -211,25 +243,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid event ID" });
       }
-      
-      console.log("Toggle sharing request for event ID:", id, "with data:", req.body);
-      
+
+      console.log(
+        "Toggle sharing request for event ID:",
+        id,
+        "with data:",
+        req.body
+      );
+
       // Get current event
       const event = await dbStorage.getEvent(id);
       if (!event) {
         console.log("Event not found with ID:", id);
         return res.status(404).json({ error: "Event not found" });
       }
-      
+
       console.log("Current event state:", event);
-      
+
       // Toggle sharing status
       const isShared = req.body.isShared === true;
       console.log("Setting isShared to:", isShared);
-      
+
       let shareToken = event.shareToken;
       let shareUrl = event.shareUrl;
-      
+
       // If we're enabling sharing and there's no token yet, generate one
       if (isShared && !shareToken) {
         shareToken = generateShareToken();
@@ -237,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log("Generated new share token:", shareToken);
         console.log("Generated share URL:", shareUrl);
       }
-      
+
       // Add the other required fields from the existing event
       const updateData = {
         title: event.title,
@@ -247,24 +284,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         location: event.location,
         isShared,
         shareToken,
-        shareUrl
+        shareUrl,
       };
-      
+
       console.log("Update data:", updateData);
-      
+
       const updatedEvent = await dbStorage.updateEvent(id, updateData);
-      
+
       if (!updatedEvent) {
-        return res.status(404).json({ error: "Failed to update event sharing status" });
+        return res
+          .status(404)
+          .json({ error: "Failed to update event sharing status" });
       }
-      
+
       res.json({ event: updatedEvent });
     } catch (error) {
       console.error("Error toggling event sharing:", error);
       res.status(500).json({ error: "Failed to update event sharing status" });
     }
   });
-  
+
   // Public endpoint to get a shared event by token (no authentication required)
   app.get("/api/events/shared/:token", async (req: Request, res: Response) => {
     try {
@@ -272,14 +311,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!token) {
         return res.status(400).json({ error: "Invalid share token" });
       }
-      
+
       // Find event by token using our optimized method
       const event = await dbStorage.getEventByToken(token);
-      
+
       if (!event || !event.isShared) {
         return res.status(404).json({ error: "Shared event not found" });
       }
-      
+
       res.json({ event });
     } catch (error) {
       console.error("Error getting shared event:", error);
@@ -303,13 +342,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch user" });
     }
   });
-  
+
   // User management endpoints
   app.get("/api/users", async (req: Request, res: Response) => {
     try {
       const users = await dbStorage.getAllUsers();
       // Remove passwords from the response
-      const safeUsers = users.map(user => {
+      const safeUsers = users.map((user) => {
         const { password, ...safeUser } = user;
         return safeUser;
       });
@@ -319,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch users" });
     }
   });
-  
+
   app.post("/api/users", async (req: Request, res: Response) => {
     try {
       // Check if username already exists
@@ -327,7 +366,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (existingUser) {
         return res.status(400).json({ error: "Username already exists" });
       }
-      
+
       // Create new user
       const userData = {
         username: req.body.username,
@@ -335,96 +374,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
-        emailNotifications: req.body.emailNotifications !== undefined ? req.body.emailNotifications : true,
-        browserNotifications: req.body.browserNotifications !== undefined ? req.body.browserNotifications : false,
-        apiChangeNotifications: req.body.apiChangeNotifications !== undefined ? req.body.apiChangeNotifications : true,
+        emailNotifications:
+          req.body.emailNotifications !== undefined
+            ? req.body.emailNotifications
+            : true,
+        browserNotifications:
+          req.body.browserNotifications !== undefined
+            ? req.body.browserNotifications
+            : false,
+        apiChangeNotifications:
+          req.body.apiChangeNotifications !== undefined
+            ? req.body.apiChangeNotifications
+            : true,
       };
-      
+
       const user = await dbStorage.createUser(userData);
-      
+
       // Remove password from response
       const { password, ...safeUser } = user;
-      
+
       res.status(201).json({ user: safeUser });
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(500).json({ error: "Failed to create user" });
     }
   });
-  
+
   app.put("/api/users/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid user ID" });
       }
-      
+
       // Check if user exists
       const existingUser = await dbStorage.getUser(id);
       if (!existingUser) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       // If username is changing, check if new username is available
       if (req.body.username && req.body.username !== existingUser.username) {
-        const usernameExists = await dbStorage.getUserByUsername(req.body.username);
+        const usernameExists = await dbStorage.getUserByUsername(
+          req.body.username
+        );
         if (usernameExists) {
           return res.status(400).json({ error: "Username already exists" });
         }
       }
-      
+
       // Update user settings
       const userData = {
         firstName: req.body.firstName || existingUser.firstName,
         lastName: req.body.lastName || existingUser.lastName,
         email: req.body.email || existingUser.email,
-        emailNotifications: req.body.emailNotifications !== undefined 
-          ? req.body.emailNotifications 
-          : existingUser.emailNotifications,
-        browserNotifications: req.body.browserNotifications !== undefined 
-          ? req.body.browserNotifications 
-          : existingUser.browserNotifications,
-        apiChangeNotifications: req.body.apiChangeNotifications !== undefined 
-          ? req.body.apiChangeNotifications 
-          : existingUser.apiChangeNotifications,
+        emailNotifications:
+          req.body.emailNotifications !== undefined
+            ? req.body.emailNotifications
+            : existingUser.emailNotifications,
+        browserNotifications:
+          req.body.browserNotifications !== undefined
+            ? req.body.browserNotifications
+            : existingUser.browserNotifications,
+        apiChangeNotifications:
+          req.body.apiChangeNotifications !== undefined
+            ? req.body.apiChangeNotifications
+            : existingUser.apiChangeNotifications,
       };
-      
+
       // Only update password if provided
       if (req.body.password) {
         userData.password = req.body.password;
       }
-      
+
       const updatedUser = await dbStorage.updateUserSettings(id, userData);
-      
+
       // Remove password from response
       const { password, ...safeUser } = updatedUser;
-      
+
       res.json({ user: safeUser });
     } catch (error) {
       console.error("Error updating user:", error);
       res.status(500).json({ error: "Failed to update user" });
     }
   });
-  
+
   app.delete("/api/users/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid user ID" });
       }
-      
+
       // For security reasons, prevent deletion of user ID 1 (admin)
       if (id === 1) {
         return res.status(403).json({ error: "Cannot delete the admin user" });
       }
-      
+
       // Add method to delete user (needs to be implemented in storage)
       const success = await dbStorage.deleteUser(id);
-      
+
       if (!success) {
         return res.status(404).json({ error: "User not found" });
       }
-      
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -479,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         browserNotifications: user.browserNotifications,
         apiChangeNotifications: user.apiChangeNotifications,
       });
-      
+
       // NOTE: In a real application, you would hash the password before storing it
       // For now, we're storing it directly in the updateUserSettings method
 
@@ -488,9 +541,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to update password" });
     }
   });
-  
+
   // Authentication is now handled by auth.ts
-  
+
   // REST endpoints for courses
   app.get("/api/courses", async (req: Request, res: Response) => {
     try {
@@ -560,7 +613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to update course" });
     }
   });
-  
+
   // Endpoint to toggle course sharing
   app.put("/api/courses/:id/share", async (req: Request, res: Response) => {
     try {
@@ -568,45 +621,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid course ID" });
       }
-      
+
       // Get current course
       const course = await dbStorage.getCourse(id);
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
-      
+
       // Toggle sharing status
       const isShared = req.body.isShared === true;
-      
+
       let shareToken = course.shareToken;
       let shareUrl = course.shareUrl;
-      
+
       // If we're enabling sharing and there's no token yet, generate one
       if (isShared && !shareToken) {
         shareToken = generateShareToken();
-        shareUrl = generateShareUrl(shareToken, 'courses');
+        shareUrl = generateShareUrl(shareToken, "courses");
       }
-      
+
       const updateData = {
         ...course,
         isShared,
         shareToken,
-        shareUrl
+        shareUrl,
       };
-      
+
       const updatedCourse = await dbStorage.updateCourse(id, updateData);
-      
+
       if (!updatedCourse) {
-        return res.status(404).json({ error: "Failed to update course sharing status" });
+        return res
+          .status(404)
+          .json({ error: "Failed to update course sharing status" });
       }
-      
+
       res.json({ course: updatedCourse });
     } catch (error) {
       console.error("Error toggling course sharing:", error);
       res.status(500).json({ error: "Failed to update course sharing status" });
     }
   });
-  
+
   // Public endpoint to get a shared course by token (no authentication required)
   app.get("/api/courses/shared/:token", async (req: Request, res: Response) => {
     try {
@@ -614,14 +669,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!token) {
         return res.status(400).json({ error: "Invalid share token" });
       }
-      
-      // Find course by token 
+
+      // Find course by token
       const course = await dbStorage.getCourseByToken(token);
-      
+
       if (!course || !course.isShared) {
         return res.status(404).json({ error: "Shared course not found" });
       }
-      
+
       res.json({ course });
     } catch (error) {
       console.error("Error getting shared course:", error);
@@ -661,41 +716,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload new media
-  app.post("/api/media", upload.single('file'), async (req: Request, res: Response) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
+  app.post(
+    "/api/media",
+    upload.single("file"),
+    async (req: Request, res: Response) => {
+      try {
+        if (!req.file) {
+          return res.status(400).json({ error: "No file uploaded" });
+        }
+
+        const file = req.file;
+        const { title, description, mediaType } = req.body;
+
+        if (!title) {
+          return res.status(400).json({ error: "Title is required" });
+        }
+
+        if (
+          !mediaType ||
+          !["image", "video", "document", "audio"].includes(mediaType)
+        ) {
+          return res.status(400).json({
+            error:
+              "Valid media type is required (image, video, document, or audio)",
+          });
+        }
+
+        // Create the media record in the database
+        const mediaItem = await dbStorage.createMedia({
+          title,
+          description: description || null,
+          fileName: file.originalname,
+          filePath: file.path,
+          fileSize: file.size,
+          fileType: file.mimetype,
+          mediaType: mediaType as any, // Cast to the enum type
+          creatorId: 1, // Default to admin user
+        });
+
+        res.status(201).json({ media: mediaItem });
+      } catch (error) {
+        console.error("Media upload error:", error);
+        res.status(500).json({ error: "Failed to upload media" });
       }
-
-      const file = req.file;
-      const { title, description, mediaType } = req.body;
-
-      if (!title) {
-        return res.status(400).json({ error: "Title is required" });
-      }
-
-      if (!mediaType || !['image', 'video', 'document', 'audio'].includes(mediaType)) {
-        return res.status(400).json({ error: "Valid media type is required (image, video, document, or audio)" });
-      }
-
-      // Create the media record in the database
-      const mediaItem = await dbStorage.createMedia({
-        title,
-        description: description || null,
-        fileName: file.originalname,
-        filePath: file.path,
-        fileSize: file.size,
-        fileType: file.mimetype,
-        mediaType: mediaType as any, // Cast to the enum type
-        creatorId: 1, // Default to admin user
-      });
-
-      res.status(201).json({ media: mediaItem });
-    } catch (error) {
-      console.error('Media upload error:', error);
-      res.status(500).json({ error: "Failed to upload media" });
     }
-  });
+  );
 
   // Update media metadata
   app.put("/api/media/:id", async (req: Request, res: Response) => {
@@ -724,247 +789,309 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // DELETE endpoint for media removed per request
 
   // Serve uploaded files
-  app.use('/uploads', (req, res, next) => {
-    // Add cache-control headers for better performance
-    res.setHeader('Cache-Control', 'public, max-age=86400');
-    next();
-  }, express.static(uploadDir));
+  app.use(
+    "/uploads",
+    (req, res, next) => {
+      // Add cache-control headers for better performance
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      next();
+    },
+    express.static(uploadDir)
+  );
 
   // Course participants endpoints
-  app.get("/api/courses/:courseId/participants", async (req: Request, res: Response) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      if (isNaN(courseId)) {
-        return res.status(400).json({ error: "Invalid course ID" });
-      }
-
-      const participants = await dbStorage.getCourseParticipants(courseId);
-      res.json({ participants });
-    } catch (error) {
-      console.error("Error fetching course participants:", error);
-      res.status(500).json({ error: "Failed to fetch course participants" });
-    }
-  });
-
-  app.post("/api/courses/:courseId/participants", async (req: Request, res: Response) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      if (isNaN(courseId)) {
-        return res.status(400).json({ error: "Invalid course ID" });
-      }
-
-      // Validate the participant data
-      const result = insertCourseParticipantSchema.safeParse({
-        ...req.body,
-        courseId,
-        attended: false, // Default to not attended
-        registeredAt: new Date()
-      });
-
-      if (!result.success) {
-        return res.status(400).json({ error: result.error.format() });
-      }
-
+  app.get(
+    "/api/courses/:courseId/participants",
+    async (req: Request, res: Response) => {
       try {
-        const participant = await dbStorage.createCourseParticipant(result.data);
-        res.status(201).json({ participant });
-      } catch (error: any) {
-        // Handle specific errors from the storage layer
-        if (error.message?.includes('registered for this course')) {
-          return res.status(409).json({ error: error.message });
+        const courseId = parseInt(req.params.courseId);
+        if (isNaN(courseId)) {
+          return res.status(400).json({ error: "Invalid course ID" });
         }
-        if (error.message?.includes('Course not found')) {
-          return res.status(404).json({ error: error.message });
+
+        const participants = await dbStorage.getCourseParticipants(courseId);
+        res.json({ participants });
+      } catch (error) {
+        console.error("Error fetching course participants:", error);
+        res.status(500).json({ error: "Failed to fetch course participants" });
+      }
+    }
+  );
+
+  app.post(
+    "/api/courses/:courseId/participants",
+    async (req: Request, res: Response) => {
+      try {
+        const courseId = parseInt(req.params.courseId);
+        if (isNaN(courseId)) {
+          return res.status(400).json({ error: "Invalid course ID" });
         }
-        throw error;
+
+        // Validate the participant data
+        const result = insertCourseParticipantSchema.safeParse({
+          ...req.body,
+          courseId,
+          attended: false, // Default to not attended
+          registeredAt: new Date(),
+        });
+
+        if (!result.success) {
+          return res.status(400).json({ error: result.error.format() });
+        }
+
+        try {
+          const participant = await dbStorage.createCourseParticipant(
+            result.data
+          );
+          res.status(201).json({ participant });
+        } catch (error: any) {
+          // Handle specific errors from the storage layer
+          if (error.message?.includes("registered for this course")) {
+            return res.status(409).json({ error: error.message });
+          }
+          if (error.message?.includes("Course not found")) {
+            return res.status(404).json({ error: error.message });
+          }
+          throw error;
+        }
+      } catch (error) {
+        console.error("Error creating course participant:", error);
+        res.status(500).json({ error: "Failed to register participant" });
       }
-    } catch (error) {
-      console.error("Error creating course participant:", error);
-      res.status(500).json({ error: "Failed to register participant" });
     }
-  });
+  );
 
-  app.put("/api/courses/:courseId/participants/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      const courseId = parseInt(req.params.courseId);
-      if (isNaN(id) || isNaN(courseId)) {
-        return res.status(400).json({ error: "Invalid ID" });
+  app.put(
+    "/api/courses/:courseId/participants/:id",
+    async (req: Request, res: Response) => {
+      try {
+        const id = parseInt(req.params.id);
+        const courseId = parseInt(req.params.courseId);
+        if (isNaN(id) || isNaN(courseId)) {
+          return res.status(400).json({ error: "Invalid ID" });
+        }
+
+        const { attended } = req.body;
+        if (typeof attended !== "boolean") {
+          return res
+            .status(400)
+            .json({ error: "Attended status must be a boolean" });
+        }
+
+        const participant = await dbStorage.updateCourseParticipantAttendance(
+          id,
+          attended
+        );
+        if (!participant) {
+          return res.status(404).json({ error: "Participant not found" });
+        }
+
+        res.json({ participant });
+      } catch (error) {
+        console.error("Error updating course participant attendance:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to update participant attendance" });
       }
-
-      const { attended } = req.body;
-      if (typeof attended !== 'boolean') {
-        return res.status(400).json({ error: "Attended status must be a boolean" });
-      }
-
-      const participant = await dbStorage.updateCourseParticipantAttendance(id, attended);
-      if (!participant) {
-        return res.status(404).json({ error: "Participant not found" });
-      }
-
-      res.json({ participant });
-    } catch (error) {
-      console.error("Error updating course participant attendance:", error);
-      res.status(500).json({ error: "Failed to update participant attendance" });
     }
-  });
+  );
 
   // Course-media relation endpoints
-  app.get("/api/courses/:courseId/media", async (req: Request, res: Response) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      if (isNaN(courseId)) {
-        return res.status(400).json({ error: "Invalid course ID" });
-      }
+  app.get(
+    "/api/courses/:courseId/media",
+    async (req: Request, res: Response) => {
+      try {
+        const courseId = parseInt(req.params.courseId);
+        if (isNaN(courseId)) {
+          return res.status(400).json({ error: "Invalid course ID" });
+        }
 
-      const mediaItems = await dbStorage.getCourseMedia(courseId);
-      res.json({ media: mediaItems });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch course media" });
+        const mediaItems = await dbStorage.getCourseMedia(courseId);
+        res.json({ media: mediaItems });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch course media" });
+      }
     }
-  });
+  );
 
   // Link media to course
-  app.post("/api/courses/:courseId/media/:mediaId", async (req: Request, res: Response) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      const mediaId = parseInt(req.params.mediaId);
-      
-      if (isNaN(courseId) || isNaN(mediaId)) {
-        return res.status(400).json({ error: "Invalid course or media ID" });
-      }
+  app.post(
+    "/api/courses/:courseId/media/:mediaId",
+    async (req: Request, res: Response) => {
+      try {
+        const courseId = parseInt(req.params.courseId);
+        const mediaId = parseInt(req.params.mediaId);
 
-      const order = req.body.order !== undefined ? parseInt(req.body.order) : 0;
-      if (isNaN(order)) {
-        return res.status(400).json({ error: "Invalid order value" });
-      }
+        if (isNaN(courseId) || isNaN(mediaId)) {
+          return res.status(400).json({ error: "Invalid course or media ID" });
+        }
 
-      // Check if course exists
-      const course = await dbStorage.getCourse(courseId);
-      if (!course) {
-        return res.status(404).json({ error: "Course not found" });
-      }
+        const order =
+          req.body.order !== undefined ? parseInt(req.body.order) : 0;
+        if (isNaN(order)) {
+          return res.status(400).json({ error: "Invalid order value" });
+        }
 
-      // Check if media exists
-      const mediaItem = await dbStorage.getMediaById(mediaId);
-      if (!mediaItem) {
-        return res.status(404).json({ error: "Media not found" });
-      }
+        // Check if course exists
+        const course = await dbStorage.getCourse(courseId);
+        if (!course) {
+          return res.status(404).json({ error: "Course not found" });
+        }
 
-      const relation = await dbStorage.linkMediaToCourse(courseId, mediaId, order);
-      res.status(201).json({ relation });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to link media to course" });
+        // Check if media exists
+        const mediaItem = await dbStorage.getMediaById(mediaId);
+        if (!mediaItem) {
+          return res.status(404).json({ error: "Media not found" });
+        }
+
+        const relation = await dbStorage.linkMediaToCourse(
+          courseId,
+          mediaId,
+          order
+        );
+        res.status(201).json({ relation });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to link media to course" });
+      }
     }
-  });
+  );
 
   // DELETE endpoint for unlinking media from course removed per request
 
   // Update media order within a course
-  app.put("/api/courses/:courseId/media/:mediaId/order", async (req: Request, res: Response) => {
-    try {
-      const courseId = parseInt(req.params.courseId);
-      const mediaId = parseInt(req.params.mediaId);
-      
-      if (isNaN(courseId) || isNaN(mediaId)) {
-        return res.status(400).json({ error: "Invalid course or media ID" });
-      }
+  app.put(
+    "/api/courses/:courseId/media/:mediaId/order",
+    async (req: Request, res: Response) => {
+      try {
+        const courseId = parseInt(req.params.courseId);
+        const mediaId = parseInt(req.params.mediaId);
 
-      const { order } = req.body;
-      if (order === undefined || isNaN(parseInt(order))) {
-        return res.status(400).json({ error: "Valid order value is required" });
-      }
+        if (isNaN(courseId) || isNaN(mediaId)) {
+          return res.status(400).json({ error: "Invalid course or media ID" });
+        }
 
-      const relation = await dbStorage.updateMediaOrder(courseId, mediaId, parseInt(order));
-      if (!relation) {
-        return res.status(404).json({ error: "Course-media relationship not found" });
-      }
+        const { order } = req.body;
+        if (order === undefined || isNaN(parseInt(order))) {
+          return res
+            .status(400)
+            .json({ error: "Valid order value is required" });
+        }
 
-      res.json({ relation });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update media order" });
+        const relation = await dbStorage.updateMediaOrder(
+          courseId,
+          mediaId,
+          parseInt(order)
+        );
+        if (!relation) {
+          return res
+            .status(404)
+            .json({ error: "Course-media relationship not found" });
+        }
+
+        res.json({ relation });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to update media order" });
+      }
     }
-  });
+  );
 
   // REST endpoints for event participants
-  app.get("/api/events/:eventId/participants", async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      if (isNaN(eventId)) {
-        return res.status(400).json({ error: "Invalid event ID" });
-      }
-
-      const participants = await dbStorage.getEventParticipants(eventId);
-      res.json({ participants });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch event participants" });
-    }
-  });
-
-  app.post("/api/events/:eventId/participants", async (req: Request, res: Response) => {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      if (isNaN(eventId)) {
-        return res.status(400).json({ error: "Invalid event ID" });
-      }
-
-      // Validate the event exists
-      const event = await dbStorage.getEvent(eventId);
-      if (!event) {
-        return res.status(404).json({ error: "Event not found" });
-      }
-
-      // Validate participant data
-      const result = eventParticipantFormSchema.safeParse({
-        ...req.body,
-        eventId
-      });
-      
-      if (!result.success) {
-        return res.status(400).json({ error: result.error.format() });
-      }
-
+  app.get(
+    "/api/events/:eventId/participants",
+    async (req: Request, res: Response) => {
       try {
-        const participant = await dbStorage.createEventParticipant(result.data);
-        res.status(201).json({ participant });
-      } catch (error: any) {
-        // Handle unique email constraint error
-        if (error.message?.includes("already registered")) {
-          return res.status(400).json({ error: error.message });
+        const eventId = parseInt(req.params.eventId);
+        if (isNaN(eventId)) {
+          return res.status(400).json({ error: "Invalid event ID" });
         }
-        throw error;
+
+        const participants = await dbStorage.getEventParticipants(eventId);
+        res.json({ participants });
+      } catch (error) {
+        res.status(500).json({ error: "Failed to fetch event participants" });
       }
-    } catch (error) {
-      console.error("Error registering participant:", error);
-      res.status(500).json({ error: "Failed to register participant" });
     }
-  });
+  );
 
-  app.put("/api/events/participants/:id/attendance", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid participant ID" });
+  app.post(
+    "/api/events/:eventId/participants",
+    async (req: Request, res: Response) => {
+      try {
+        const eventId = parseInt(req.params.eventId);
+        if (isNaN(eventId)) {
+          return res.status(400).json({ error: "Invalid event ID" });
+        }
+
+        // Validate the event exists
+        const event = await dbStorage.getEvent(eventId);
+        if (!event) {
+          return res.status(404).json({ error: "Event not found" });
+        }
+
+        // Validate participant data
+        const result = eventParticipantFormSchema.safeParse({
+          ...req.body,
+          eventId,
+        });
+
+        if (!result.success) {
+          return res.status(400).json({ error: result.error.format() });
+        }
+
+        try {
+          const participant = await dbStorage.createEventParticipant(
+            result.data
+          );
+          res.status(201).json({ participant });
+        } catch (error: any) {
+          // Handle unique email constraint error
+          if (error.message?.includes("already registered")) {
+            return res.status(400).json({ error: error.message });
+          }
+          throw error;
+        }
+      } catch (error) {
+        console.error("Error registering participant:", error);
+        res.status(500).json({ error: "Failed to register participant" });
       }
-
-      const { attended } = req.body;
-      if (typeof attended !== 'boolean') {
-        return res.status(400).json({ error: "Attended status must be a boolean" });
-      }
-
-      const participant = await dbStorage.updateEventParticipantAttendance(id, attended);
-      if (!participant) {
-        return res.status(404).json({ error: "Participant not found" });
-      }
-
-      res.json({ participant });
-    } catch (error) {
-      res.status(500).json({ error: "Failed to update participant attendance" });
     }
-  });
+  );
+
+  app.put(
+    "/api/events/participants/:id/attendance",
+    async (req: Request, res: Response) => {
+      try {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+          return res.status(400).json({ error: "Invalid participant ID" });
+        }
+
+        const { attended } = req.body;
+        if (typeof attended !== "boolean") {
+          return res
+            .status(400)
+            .json({ error: "Attended status must be a boolean" });
+        }
+
+        const participant = await dbStorage.updateEventParticipantAttendance(
+          id,
+          attended
+        );
+        if (!participant) {
+          return res.status(404).json({ error: "Participant not found" });
+        }
+
+        res.json({ participant });
+      } catch (error) {
+        res
+          .status(500)
+          .json({ error: "Failed to update participant attendance" });
+      }
+    }
+  );
 
   // DELETE endpoint for event participants removed per request
-  
+
   // Training sessions endpoints
   app.get("/api/training-sessions", async (req: Request, res: Response) => {
     try {
@@ -976,36 +1103,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/training-sessions/month/:year/:month", async (req: Request, res: Response) => {
-    try {
-      const year = parseInt(req.params.year);
-      const month = parseInt(req.params.month);
-      
-      if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
-        return res.status(400).json({ error: "Invalid year or month" });
+  app.get(
+    "/api/training-sessions/month/:year/:month",
+    async (req: Request, res: Response) => {
+      try {
+        const year = parseInt(req.params.year);
+        const month = parseInt(req.params.month);
+
+        if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+          return res.status(400).json({ error: "Invalid year or month" });
+        }
+
+        const sessions = await dbStorage.getTrainingSessionsByMonth(
+          year,
+          month
+        );
+        res.json({ sessions });
+      } catch (error) {
+        console.error("Error getting monthly training sessions:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch monthly training sessions" });
       }
-      
-      const sessions = await dbStorage.getTrainingSessionsByMonth(year, month);
-      res.json({ sessions });
-    } catch (error) {
-      console.error("Error getting monthly training sessions:", error);
-      res.status(500).json({ error: "Failed to fetch monthly training sessions" });
     }
-  });
+  );
 
   app.get("/api/training-sessions/:id", async (req: Request, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      
+
       if (isNaN(id)) {
         return res.status(400).json({ error: "Invalid training session ID" });
       }
-      
+
       const session = await dbStorage.getTrainingSession(id);
       if (!session) {
         return res.status(404).json({ error: "Training session not found" });
       }
-      
+
       res.json({ session });
     } catch (error) {
       console.error("Error getting training session:", error);
@@ -1016,32 +1151,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/training-sessions", async (req: Request, res: Response) => {
     try {
       const parseResult = insertTrainingSessionSchema.safeParse(req.body);
-      
+
       if (!parseResult.success) {
-        return res.status(400).json({ 
-          error: "Invalid training session data", 
-          details: parseResult.error.format() 
+        return res.status(400).json({
+          error: "Invalid training session data",
+          details: parseResult.error.format(),
         });
       }
-      
+
       // Verify course exists
       const course = await dbStorage.getCourse(parseResult.data.courseId);
       if (!course) {
         return res.status(404).json({ error: "Course not found" });
       }
-      
+
       const session = await dbStorage.createTrainingSession(parseResult.data);
-      
+
       // Notify connected clients about the new training session
-      wss.clients.forEach(client => {
+      wss.clients.forEach((client) => {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'training_session_created',
-            session
-          }));
+          client.send(
+            JSON.stringify({
+              type: "training_session_created",
+              session,
+            })
+          );
         }
       });
-      
+
       res.status(201).json({ session });
     } catch (error) {
       console.error("Error creating training session:", error);
@@ -1050,74 +1187,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // DELETE endpoint for training sessions
-  app.delete("/api/training-sessions/:id", async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      
-      if (isNaN(id)) {
-        return res.status(400).json({ error: "Invalid training session ID" });
-      }
-      
-      const success = await dbStorage.deleteTrainingSession(id);
-      
-      if (!success) {
-        return res.status(404).json({ error: "Training session not found" });
-      }
-      
-      // Notify connected clients about the deleted training session
-      wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'training_session_deleted',
-            id
-          }));
+  app.delete(
+    "/api/training-sessions/:id",
+    async (req: Request, res: Response) => {
+      try {
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+          return res.status(400).json({ error: "Invalid training session ID" });
         }
-      });
-      
-      res.status(200).json({ success });
-    } catch (error) {
-      console.error("Error deleting training session:", error);
-      res.status(500).json({ error: "Failed to delete training session" });
+
+        const success = await dbStorage.deleteTrainingSession(id);
+
+        if (!success) {
+          return res.status(404).json({ error: "Training session not found" });
+        }
+
+        // Notify connected clients about the deleted training session
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(
+              JSON.stringify({
+                type: "training_session_deleted",
+                id,
+              })
+            );
+          }
+        });
+
+        res.status(200).json({ success });
+      } catch (error) {
+        console.error("Error deleting training session:", error);
+        res.status(500).json({ error: "Failed to delete training session" });
+      }
     }
-  });
+  );
 
   // API Keys endpoints
   app.use("/api/keys", apiKeysRouter);
 
   const httpServer = createServer(app);
-  
+
   // Set up WebSocket server for real-time updates
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
-  
-  wss.on('connection', (ws) => {
-    console.log('Client connected to WebSocket');
-    
-    ws.on('message', (message) => {
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+
+  wss.on("connection", (ws) => {
+    console.log("Client connected to WebSocket");
+
+    ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log('Received message:', data);
-        
+        console.log("Received message:", data);
+
         // Handle different message types
-        if (data.type === 'training_session_created') {
+        if (data.type === "training_session_created") {
           // Broadcast to all connected clients
-          wss.clients.forEach(client => {
+          wss.clients.forEach((client) => {
             if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'training_session_updated',
-                data: data.session
-              }));
+              client.send(
+                JSON.stringify({
+                  type: "training_session_updated",
+                  data: data.session,
+                })
+              );
             }
           });
         }
       } catch (error) {
-        console.error('Error processing WebSocket message:', error);
+        console.error("Error processing WebSocket message:", error);
       }
     });
-    
-    ws.on('close', () => {
-      console.log('Client disconnected from WebSocket');
+
+    ws.on("close", () => {
+      console.log("Client disconnected from WebSocket");
     });
   });
-  
+
   return httpServer;
 }

@@ -44,9 +44,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1">
+        <nav className="flex-1 px-4 py-4 space-y-1"> {/* Adjusted px-2 to px-4 */}
           <Link href="/">
-            <a 
+            <a
               onClick={handleNavClick}
               className={cn(
                 "group flex items-center px-3 py-2 text-sm font-medium rounded-md",

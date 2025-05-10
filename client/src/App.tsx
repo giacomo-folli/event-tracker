@@ -16,8 +16,6 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { useState } from "react";
 import { ProtectedRoute } from "@/lib/ProtectedRoute";
 import { AuthProvider, useAuth } from "./hooks/AuthProvider";
-import OnboardingTutorial from "./components/tutorial/OnboardingTutorial";
-import TutorialButton from "./components/tutorial/TutorialButton";
 
 function AdminLayout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -25,7 +23,7 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-0 left-0 z-20 p-4">
+      <div className="lg:hidden fixed top-0 left-0 z-30 p-4"> {/* Increased z-index slightly */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
           className="p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
@@ -38,12 +36,11 @@ function AdminLayout({ children }: { children: React.ReactNode }) {
 
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex justify-end p-4">
-          <TutorialButton position="top-right" showText={false} className="ml-auto" />
-        </div>
+      {/* Main content area */}
+      <main className="flex-1 flex flex-col overflow-y-auto"> {/* Changed to main, added overflow-y-auto */}
+        {/* Content will be rendered here, typically including a page-specific Header */}
         {children}
-      </div>
+      </main>
     </div>
   );
 }
@@ -125,9 +122,7 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <OnboardingTutorial>
-        <AppRoutes />
-      </OnboardingTutorial>
+      <AppRoutes />
     </AuthProvider>
   );
 }
