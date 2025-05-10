@@ -9,6 +9,7 @@ import {
   passwordUpdateSchema,
   insertCourseSchema,
   updateCourseSchema,
+  type UpdateCourse,
   updateMediaSchema,
   eventParticipantFormSchema,
   insertTrainingSessionSchema,
@@ -424,7 +425,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update user settings
-      const userData = {
+      const userData: {
+        firstName: any;
+        lastName: any;
+        email: any;
+        emailNotifications: any;
+        browserNotifications: any;
+        apiChangeNotifications: any;
+        password?: string; // Add password as an optional property
+      } = {
         firstName: req.body.firstName || existingUser.firstName,
         lastName: req.body.lastName || existingUser.lastName,
         email: req.body.email || existingUser.email,
@@ -448,6 +457,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedUser = await dbStorage.updateUserSettings(id, userData);
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found after update" });
+      }
 
       // Remove password from response
       const { password, ...safeUser } = updatedUser;
@@ -582,12 +595,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: result.error.format() });
       }
 
-      // Default creatorId to 1 (admin) for now
-      const courseData = { ...result.data, creatorId: 1 };
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      // Use the authenticated user's ID as creatorId
+      const courseData = { ...result.data, creatorId: req.user.id };
       const course = await dbStorage.createCourse(courseData);
       res.status(201).json({ course });
     } catch (error) {
-      res.status(500).json({ error: "Failed to create course" });
+      console.error("Error creating course:", error); // Log the full error
+      res.status(500).json({
+        error: "Failed to create course",
+        details: error instanceof Error ? error.message : String(error),
+      });
     }
   });
 
@@ -640,14 +661,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         shareUrl = generateShareUrl(shareToken, "courses");
       }
 
-      const updateData = {
-        ...course,
-        isShared,
-        shareToken,
-        shareUrl,
+      // Construct a payload that strictly matches the UpdateCourse schema
+      const updatePayload: UpdateCourse = {
+        title: course.title,
+        description: course.description,
+        instructor: course.instructor,
+        level: course.level,
+        duration: course.duration,
+        // Convert startDate from (Date | null) to (Date | undefined)
+        startDate: course.startDate === null ? undefined : course.startDate,
+        isShared: isShared, // The new sharing status
+        shareToken: shareToken, // The new or existing share token
+        shareUrl: shareUrl, // The new or existing share URL
       };
 
-      const updatedCourse = await dbStorage.updateCourse(id, updateData);
+      const updatedCourse = await dbStorage.updateCourse(id, updatePayload);
 
       if (!updatedCourse) {
         return res
