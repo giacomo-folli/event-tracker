@@ -13,7 +13,7 @@ import { useSettings } from "@/hooks/useSettings";
 type ProfileFormValues = z.infer<typeof userSettingsFormSchema>;
 
 interface ProfileFormProps {
-  user: User;
+  user: Omit<User, "password" | "emailNotifications" | "browserNotifications" | "apiChangeNotifications">;
   onSuccess: () => void;
 }
 
@@ -27,9 +27,6 @@ export function ProfileForm({ user, onSuccess }: ProfileFormProps) {
       firstName: user.firstName || "",
       lastName: user.lastName || "",
       email: user.email || "",
-      emailNotifications: user.emailNotifications,
-      browserNotifications: user.browserNotifications,
-      apiChangeNotifications: user.apiChangeNotifications,
     },
   });
 

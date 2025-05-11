@@ -429,26 +429,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: any;
         lastName: any;
         email: any;
-        emailNotifications: any;
-        browserNotifications: any;
-        apiChangeNotifications: any;
-        password?: string; // Add password as an optional property
+        password?: string;
       } = {
         firstName: req.body.firstName || existingUser.firstName,
         lastName: req.body.lastName || existingUser.lastName,
         email: req.body.email || existingUser.email,
-        emailNotifications:
-          req.body.emailNotifications !== undefined
-            ? req.body.emailNotifications
-            : existingUser.emailNotifications,
-        browserNotifications:
-          req.body.browserNotifications !== undefined
-            ? req.body.browserNotifications
-            : existingUser.browserNotifications,
-        apiChangeNotifications:
-          req.body.apiChangeNotifications !== undefined
-            ? req.body.apiChangeNotifications
-            : existingUser.apiChangeNotifications,
       };
 
       // Only update password if provided
@@ -541,9 +526,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        emailNotifications: user.emailNotifications,
-        browserNotifications: user.browserNotifications,
-        apiChangeNotifications: user.apiChangeNotifications,
       });
 
       // NOTE: In a real application, you would hash the password before storing it

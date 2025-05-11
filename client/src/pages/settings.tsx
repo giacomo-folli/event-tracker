@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { AccountForm } from "@/components/settings/AccountForm";
-import { NotificationForm } from "@/components/settings/NotificationForm";
 import { ApiKeysForm } from "@/components/settings/ApiKeysForm";
 import { useSettings } from "@/hooks/useSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,7 +42,6 @@ export default function Settings() {
             <TabsList className="mb-4">
               <TabsTrigger value="profile">Profile</TabsTrigger>
               <TabsTrigger value="account">Account</TabsTrigger>
-              <TabsTrigger value="notifications" className="notification-settings">Notifications</TabsTrigger>
               <TabsTrigger value="api-keys">API Keys</TabsTrigger>
             </TabsList>
             
@@ -56,12 +54,6 @@ export default function Settings() {
             <TabsContent value="account">
               <div className="py-6">
                 <AccountForm />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="notifications">
-              <div className="py-6">
-                <NotificationForm user={user} onSuccess={refetch} />
               </div>
             </TabsContent>
             
